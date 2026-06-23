@@ -171,16 +171,39 @@ button:focus-visible {
   outline-offset: 3px;
 }
 
+button:disabled {
+  cursor: wait;
+  opacity: 0.7;
+}
+
+.form-error {
+  margin: 20px 0 0;
+  padding: 12px 14px;
+  border: 1px solid #efc8c8;
+  border-radius: 10px;
+  color: #8b2d2d;
+  background: #fff5f5;
+  font-size: 0.9rem;
+}
+
 .preview {
-  display: flex;
-  gap: 16px;
-  align-items: center;
   margin-top: 28px;
   padding: 22px;
   border: 1px dashed #bcc9bf;
   border-radius: 16px;
   color: #718078;
   background: #f8faf8;
+}
+
+.preview-empty,
+.preview-heading {
+  display: flex;
+  gap: 16px;
+  align-items: center;
+}
+
+.preview-heading {
+  justify-content: space-between;
 }
 
 .preview-icon {
@@ -206,6 +229,84 @@ button:focus-visible {
   margin: 0;
   font-size: 0.9rem;
   line-height: 1.5;
+}
+
+.preview-status {
+  flex: 0 0 auto;
+  padding: 6px 9px;
+  border-radius: 999px;
+  color: #765b16;
+  background: #fff3c9;
+  font-size: 0.72rem;
+  font-weight: 800;
+}
+
+.preview-status--success {
+  color: #106f31;
+  background: #e2f5e8;
+}
+
+.preview-stats {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 10px;
+  margin: 20px 0;
+}
+
+.preview-stats div {
+  padding: 12px;
+  border-radius: 10px;
+  background: #fff;
+}
+
+.preview-stats dt {
+  color: #718078;
+  font-size: 0.72rem;
+  font-weight: 700;
+  text-transform: uppercase;
+}
+
+.preview-stats dd {
+  margin: 4px 0 0;
+  color: #2b3730;
+  font-weight: 800;
+}
+
+.track-list {
+  display: grid;
+  gap: 0;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.track-list li {
+  display: flex;
+  gap: 16px;
+  align-items: center;
+  justify-content: space-between;
+  padding: 12px 0;
+  border-top: 1px solid #e1e8e3;
+}
+
+.track-list strong,
+.track-list span {
+  display: block;
+}
+
+.track-list strong {
+  color: #2b3730;
+  font-size: 0.9rem;
+}
+
+.track-list span,
+.track-list time {
+  color: #718078;
+  font-size: 0.78rem;
+}
+
+.track-list time {
+  flex: 0 0 auto;
 }
 
 .app-card > .ad-slot--after-preview {
@@ -257,7 +358,16 @@ button:focus-visible {
     border-radius: 20px;
   }
 
-  .preview {
+  .preview-empty,
+  .preview-heading {
     align-items: flex-start;
+  }
+
+  .preview-heading {
+    flex-direction: column;
+  }
+
+  .preview-stats {
+    grid-template-columns: 1fr;
   }
 }

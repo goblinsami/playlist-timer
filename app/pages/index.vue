@@ -1,9 +1,93 @@
 <script setup lang="ts">
 type Accuracy = 'exact' | 'balanced' | 'flexible'
 
+interface PreviewTrack {
+  id: string
+  name: string
+  artist: string
+  durationMs: number
+  isCue?: boolean
+}
+
+interface PreviewResponse {
+  previewId: string
+  artist: {
+    name: string
+  }
+  targetDurationMs: number
+  actualDurationMs: number
+  differenceMs: number
+  isWithinTolerance: boolean
+  tracks: PreviewTrack[]
+}
+
+const toleranceByAccuracy: Record<Accuracy, number> = {
+  exact: 10,
+  balanced: 30,
+  flexible: 60,
+}
+
 const artist = ref('')
 const durationMinutes = ref<number | null>(null)
 const accuracy = ref<Accuracy>('balanced')
+const preview = ref<PreviewResponse | null>(null)
+const isLoading = ref(false)
+const errorMessage = ref('')
+
+async function handlePreviewSubmit(): Promise<void> {
+  await generatePreview()
+}
+
+async function generatePreview(): Promise<void> {
+  const requestedArtist = artist.value
+  const requestedDurationMinutes = durationMinutes.value
+  const requestedAccuracy = accuracy.value
+
+  isLoading.value = true
+  errorMessage.value = ''
+
+  try {
+    preview.value = await $fetch<PreviewResponse>('/api/preview', {
+      method: 'POST',
+      body: {
+        artist: requestedArtist,
+        durationMinutes: requestedDurationMinutes,
+        toleranceSeconds: toleranceByAccuracy[requestedAccuracy],
+        includeCues: true,
+      },
+    })
+  }
+  catch (error: unknown) {
+    errorMessage.value = getErrorMessage(error)
+  }
+  finally {
+    isLoading.value = false
+  }
+}
+
+function getErrorMessage(error: unknown): string {
+  if (
+    typeof error === 'object'
+    && error !== null
+    && 'data' in error
+    && typeof error.data === 'object'
+    && error.data !== null
+    && 'statusMessage' in error.data
+    && typeof error.data.statusMessage === 'string'
+  ) {
+    return error.data.statusMessage
+  }
+
+  return 'Unable to generate a preview. Please try again.'
+}
+
+function formatDuration(durationMs: number): string {
+  const totalSeconds = Math.round(durationMs / 1_000)
+  const minutes = Math.floor(totalSeconds / 60)
+  const seconds = totalSeconds % 60
+
+  return `${minutes}:${seconds.toString().padStart(2, '0')}`
+}
 </script>
 
 <template>
@@ -26,7 +110,7 @@ const accuracy = ref<Accuracy>('balanced')
               </p>
             </header>
 
-            <form class="playlist-form" @submit.prevent>
+            <form class="playlist-form" @submit.prevent="handlePreviewSubmit">
               <div class="field">
                 <label for="artist">Artist</label>
                 <input
@@ -36,6 +120,7 @@ const accuracy = ref<Accuracy>('balanced')
                   name="artist"
                   placeholder="e.g. Daft Punk"
                   autocomplete="off"
+                  required
                 >
               </div>
 
@@ -43,13 +128,14 @@ const accuracy = ref<Accuracy>('balanced')
                 <label for="duration">Duration in minutes</label>
                 <input
                   id="duration"
-                  v-model="durationMinutes"
+                  v-model.number="durationMinutes"
                   type="number"
                   name="duration"
                   min="1"
                   step="1"
                   placeholder="45"
                   inputmode="numeric"
+                  required
                 >
               </div>
 
@@ -70,21 +156,78 @@ const accuracy = ref<Accuracy>('balanced')
                 </div>
               </fieldset>
 
-              <button type="submit">
-                Generate Preview
+              <button type="submit" :disabled="isLoading">
+                {{ isLoading ? 'Generating…' : 'Generate Preview' }}
               </button>
             </form>
 
-            <section class="preview" aria-labelledby="preview-title" aria-disabled="true">
-              <div class="preview-icon" aria-hidden="true">
-                ♪
+            <p v-if="errorMessage" class="form-error" role="alert">
+              {{ errorMessage }}
+            </p>
+
+            <section
+              class="preview"
+              aria-labelledby="preview-title"
+              aria-live="polite"
+              :aria-busy="isLoading"
+            >
+              <div v-if="!preview" class="preview-empty">
+                <div class="preview-icon" aria-hidden="true">
+                  ♪
+                </div>
+                <div>
+                  <h2 id="preview-title">
+                    Playlist preview
+                  </h2>
+                  <p>
+                    {{ isLoading ? 'Building your mock playlist…' : 'Your generated track list will appear here.' }}
+                  </p>
+                </div>
               </div>
-              <div>
-                <h2 id="preview-title">
-                  Playlist preview
-                </h2>
-                <p>Your generated track list will appear here.</p>
-              </div>
+
+              <template v-else>
+                <div class="preview-heading">
+                  <div>
+                    <h2 id="preview-title">
+                      Playlist preview
+                    </h2>
+                    <p>Mock tracks for {{ preview.artist.name }}</p>
+                  </div>
+                  <span
+                    class="preview-status"
+                    :class="{ 'preview-status--success': preview.isWithinTolerance }"
+                  >
+                    {{ preview.isWithinTolerance ? 'Within tolerance' : 'Best effort' }}
+                  </span>
+                </div>
+
+                <dl class="preview-stats">
+                  <div>
+                    <dt>Target</dt>
+                    <dd>{{ formatDuration(preview.targetDurationMs) }}</dd>
+                  </div>
+                  <div>
+                    <dt>Actual</dt>
+                    <dd>{{ formatDuration(preview.actualDurationMs) }}</dd>
+                  </div>
+                  <div>
+                    <dt>Difference</dt>
+                    <dd>{{ formatDuration(preview.differenceMs) }}</dd>
+                  </div>
+                </dl>
+
+                <ol class="track-list">
+                  <li v-for="track in preview.tracks" :key="track.id">
+                    <div>
+                      <strong>{{ track.name }}</strong>
+                      <span>{{ track.artist }}{{ track.isCue ? ' · Cue' : '' }}</span>
+                    </div>
+                    <time :datetime="`PT${Math.round(track.durationMs / 1000)}S`">
+                      {{ formatDuration(track.durationMs) }}
+                    </time>
+                  </li>
+                </ol>
+              </template>
             </section>
 
             <AdSlot position="after-preview" />
