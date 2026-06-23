@@ -4,3 +4,5 @@ node_modules
 .env
 .DS_Store
 npm-debug.log*
+.tmp-nuxt-dev.err.log
+.tmp-nuxt-dev.out.log

@@ -4,6 +4,10 @@ export default defineNuxtConfig({
   srcDir: 'app/',
   serverDir: 'server',
   css: ['~/assets/css/main.css'],
+  runtimeConfig: {
+    spotifyClientId: process.env.SPOTIFY_CLIENT_ID,
+    spotifyClientSecret: process.env.SPOTIFY_CLIENT_SECRET,
+  },
   app: {
     head: {
       title: 'Playlist Timer',
