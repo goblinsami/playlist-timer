@@ -8,6 +8,7 @@ import {
   searchArtistByName,
   SpotifyServiceError,
 } from '../services/spotify.service'
+import { getPreview, savePreview } from '../services/previewStore.service'
 
 interface PreviewRequest {
   artist?: unknown
@@ -67,8 +68,7 @@ export default defineEventHandler(async (event) => {
     })
   }
 
-  return {
-    previewId: 'spotify-preview-id',
+  const previewId = savePreview({
     artist: {
       name: spotifyArtist.name,
       spotifyId: spotifyArtist.id,
@@ -77,9 +77,20 @@ export default defineEventHandler(async (event) => {
     targetDurationMs: result.targetDurationMs,
     actualDurationMs: result.actualDurationMs,
     differenceMs: result.differenceMs,
+    toleranceMs: result.toleranceMs,
     isWithinTolerance: result.isWithinTolerance,
     tracks: result.tracks,
+  })
+  const preview = getPreview(previewId)
+
+  if (!preview) {
+    throw createError({
+      statusCode: 500,
+      statusMessage: 'PREVIEW_STORE_ERROR',
+    })
   }
+
+  return preview
 })
 
 async function getSpotifyArtistOrThrow(artistName: string) {
