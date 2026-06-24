@@ -1,6 +1,8 @@
 <script setup lang="ts">
 type AdPosition = 'top' | 'after-preview' | 'bottom' | 'sidebar'
 
+const { t } = useI18n()
+
 defineProps<{
   position: AdPosition
   label?: string
@@ -11,9 +13,9 @@ defineProps<{
   <aside
     class="ad-slot"
     :class="`ad-slot--${position}`"
-    aria-label="Advertisement"
+    :aria-label="t('ads.label')"
   >
-    <span>Advertisement</span>
+    <span>{{ t('ads.label') }}</span>
     <small v-if="label">{{ label }}</small>
   </aside>
 </template>

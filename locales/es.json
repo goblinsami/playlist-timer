@@ -1,0 +1,79 @@
+{
+  "app": {
+    "name": "Playlist Timer"
+  },
+  "hero": {
+    "eyebrow": "Tu tiempo, tu banda sonora",
+    "title": "Crea playlists de Spotify por duración",
+    "subtitle": "Elige un artista, una duración y genera una playlist que termine justo cuando la necesitas."
+  },
+  "form": {
+    "artist": {
+      "label": "Artista",
+      "placeholder": "p. ej. Daft Punk"
+    },
+    "duration": {
+      "label": "Duración en minutos",
+      "placeholder": "45"
+    },
+    "accuracy": {
+      "label": "Precisión",
+      "exact": "Exacta ±10s",
+      "balanced": "Equilibrada ±30s",
+      "flexible": "Flexible ±60s"
+    },
+    "generate": "Generar preview",
+    "export": "Exportar a Spotify",
+    "exporting": "Exportando…"
+  },
+  "preview": {
+    "title": "Preview de la playlist",
+    "empty": "Tu lista de canciones generada aparecerá aquí.",
+    "building": "Construyendo tu playlist…",
+    "tracksFor": "Canciones para {artist}",
+    "target": "Objetivo",
+    "actual": "Real",
+    "difference": "Diferencia",
+    "status": "Estado",
+    "withinTolerance": "Dentro del margen",
+    "outsideTolerance": "Mejor aproximación",
+    "tracks": "Canciones",
+    "openInSpotify": "Abrir en Spotify",
+    "generateAnother": "Generar otra",
+    "cue": "Marca"
+  },
+  "loading": {
+    "generating": "Generando…",
+    "exporting": "Exportando…"
+  },
+  "errors": {
+    "generic": "Algo ha ido mal. Inténtalo de nuevo.",
+    "previewFailed": "No se ha podido generar la preview. Inténtalo de nuevo.",
+    "exportFailed": "No se ha podido exportar a Spotify. Inténtalo de nuevo.",
+    "missingPreview": "Falta la preview. Genera una preview antes de exportar.",
+    "spotifyAddItemsForbidden": "Spotify creó la playlist, pero rechazó añadir canciones. La playlist vacía se eliminó si fue posible. Revisa los permisos de la app de Spotify e inténtalo de nuevo.",
+    "codes": {
+      "SPOTIFY_ADD_TRACKS_FORBIDDEN": "Spotify creó la playlist, pero rechazó añadir canciones. La playlist vacía se eliminó si fue posible. Revisa los permisos de la app de Spotify e inténtalo de nuevo.",
+      "SPOTIFY_AUTH_REQUIRED": "Conecta Spotify antes de exportar.",
+      "SPOTIFY_AUTH_ERROR": "La autorización de Spotify ha fallado. Inténtalo de nuevo.",
+      "SPOTIFY_SCOPE_ERROR": "Spotify no concedió los permisos necesarios para playlists. Borra las cookies y autoriza de nuevo.",
+      "PREVIEW_NOT_FOUND": "Esta preview ha caducado o no se ha encontrado.",
+      "NO_EXPORTABLE_TRACKS": "Esta preview no tiene canciones de Spotify para exportar."
+    }
+  },
+  "ads": {
+    "label": "Publicidad"
+  },
+  "seo": {
+    "title": "Crea playlists de Spotify por duración",
+    "description": "Playlist Timer generará playlists según el artista, la duración objetivo y la precisión que elijas."
+  },
+  "language": {
+    "label": "Idioma",
+    "options": {
+      "en": "English",
+      "es": "Español",
+      "ca": "Català"
+    }
+  }
+}

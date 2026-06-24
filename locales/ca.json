@@ -1,0 +1,79 @@
+{
+  "app": {
+    "name": "Playlist Timer"
+  },
+  "hero": {
+    "eyebrow": "El teu temps, la teva banda sonora",
+    "title": "Crea playlists de Spotify per durada",
+    "subtitle": "Tria un artista, una durada i genera una playlist que acabi just quan la necessites."
+  },
+  "form": {
+    "artist": {
+      "label": "Artista",
+      "placeholder": "p. ex. Daft Punk"
+    },
+    "duration": {
+      "label": "Durada en minuts",
+      "placeholder": "45"
+    },
+    "accuracy": {
+      "label": "Precisió",
+      "exact": "Exacta ±10s",
+      "balanced": "Equilibrada ±30s",
+      "flexible": "Flexible ±60s"
+    },
+    "generate": "Genera la previsualització",
+    "export": "Exporta a Spotify",
+    "exporting": "Exportant…"
+  },
+  "preview": {
+    "title": "Previsualització de la playlist",
+    "empty": "La llista de cançons generada apareixerà aquí.",
+    "building": "Construint la teva playlist…",
+    "tracksFor": "Cançons per a {artist}",
+    "target": "Objectiu",
+    "actual": "Real",
+    "difference": "Diferència",
+    "status": "Estat",
+    "withinTolerance": "Dins del marge",
+    "outsideTolerance": "Millor aproximació",
+    "tracks": "Cançons",
+    "openInSpotify": "Obre a Spotify",
+    "generateAnother": "Genera'n una altra",
+    "cue": "Marca"
+  },
+  "loading": {
+    "generating": "Generant…",
+    "exporting": "Exportant…"
+  },
+  "errors": {
+    "generic": "Alguna cosa ha anat malament. Torna-ho a provar.",
+    "previewFailed": "No s'ha pogut generar la previsualització. Torna-ho a provar.",
+    "exportFailed": "No s'ha pogut exportar a Spotify. Torna-ho a provar.",
+    "missingPreview": "Falta la previsualització. Genera'n una abans d'exportar.",
+    "spotifyAddItemsForbidden": "Spotify ha creat la playlist, però ha rebutjat afegir-hi cançons. La playlist buida s'ha eliminat si ha estat possible. Revisa els permisos de l'app de Spotify i torna-ho a provar.",
+    "codes": {
+      "SPOTIFY_ADD_TRACKS_FORBIDDEN": "Spotify ha creat la playlist, però ha rebutjat afegir-hi cançons. La playlist buida s'ha eliminat si ha estat possible. Revisa els permisos de l'app de Spotify i torna-ho a provar.",
+      "SPOTIFY_AUTH_REQUIRED": "Connecta Spotify abans d'exportar.",
+      "SPOTIFY_AUTH_ERROR": "L'autorització de Spotify ha fallat. Torna-ho a provar.",
+      "SPOTIFY_SCOPE_ERROR": "Spotify no ha concedit els permisos necessaris per a playlists. Esborra les cookies i autoritza de nou.",
+      "PREVIEW_NOT_FOUND": "Aquesta previsualització ha caducat o no s'ha trobat.",
+      "NO_EXPORTABLE_TRACKS": "Aquesta previsualització no té cançons de Spotify per exportar."
+    }
+  },
+  "ads": {
+    "label": "Publicitat"
+  },
+  "seo": {
+    "title": "Crea playlists de Spotify per durada",
+    "description": "Playlist Timer generarà playlists segons l'artista, la durada objectiu i la precisió que triïs."
+  },
+  "language": {
+    "label": "Idioma",
+    "options": {
+      "en": "English",
+      "es": "Español",
+      "ca": "Català"
+    }
+  }
+}

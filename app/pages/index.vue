@@ -1,5 +1,6 @@
 <script setup lang="ts">
 type Accuracy = 'exact' | 'balanced' | 'flexible'
+type LocaleCode = 'en' | 'es' | 'ca'
 
 interface PreviewTrack {
   id: string
@@ -33,6 +34,7 @@ const toleranceByAccuracy: Record<Accuracy, number> = {
   flexible: 60,
 }
 
+const { t, locale, setLocale } = useI18n()
 const route = useRoute()
 const router = useRouter()
 const artist = ref('Shakira')
@@ -44,6 +46,17 @@ const isExporting = ref(false)
 const errorMessage = ref('')
 const exportErrorMessage = ref('')
 const spotifyPlaylistUrl = ref('')
+const localeOptions: LocaleCode[] = ['en', 'es', 'ca']
+
+useHead(() => ({
+  title: `${t('hero.title')} · ${t('app.name')}`,
+  meta: [
+    {
+      name: 'description',
+      content: t('hero.subtitle'),
+    },
+  ],
+}))
 
 onMounted(async () => {
   const previewId = getQueryString(route.query.previewId)
@@ -51,7 +64,7 @@ onMounted(async () => {
   const spotifyError = getQueryString(route.query.spotifyError)
 
   if (spotifyError) {
-    exportErrorMessage.value = spotifyError
+    exportErrorMessage.value = getStatusMessage(spotifyError)
     return
   }
 
@@ -123,7 +136,7 @@ function startSpotifyLogin(): void {
   }
 
   if (!previewId) {
-    exportErrorMessage.value = 'Preview is missing. Generate a preview before exporting.'
+    exportErrorMessage.value = t('errors.missingPreview')
     return
   }
 
@@ -169,14 +182,17 @@ function getErrorMessage(error: unknown): string {
     && 'statusMessage' in error.data
     && typeof error.data.statusMessage === 'string'
   ) {
-    if (error.data.statusMessage === 'SPOTIFY_ADD_TRACKS_FORBIDDEN') {
-      return 'Spotify created the playlist but refused adding tracks. The empty playlist was removed if possible. Please check Spotify app permissions and try again.'
-    }
-
-    return error.data.statusMessage
+    return getStatusMessage(error.data.statusMessage)
   }
 
-  return 'Unable to generate a preview. Please try again.'
+  return t('errors.previewFailed')
+}
+
+function getStatusMessage(statusMessage: string): string {
+  const translationKey = `errors.codes.${statusMessage}`
+  const translatedMessage = t(translationKey)
+
+  return translatedMessage === translationKey ? statusMessage : translatedMessage
 }
 
 function formatDuration(durationMs: number): string {
@@ -190,6 +206,12 @@ function formatDuration(durationMs: number): string {
 function getQueryString(value: unknown): string {
   return typeof value === 'string' ? value : ''
 }
+
+function handleLocaleChange(event: Event): void {
+  const target = event.target as HTMLSelectElement
+
+  void setLocale(target.value as LocaleCode)
+}
 </script>
 
 <template>
@@ -200,34 +222,47 @@ function getQueryString(value: unknown): string {
 
         <div class="primary-column">
           <section class="app-card" aria-labelledby="page-title">
+            <label class="language-switcher">
+              <span>{{ t('language.label') }}</span>
+              <select :value="locale" name="language" @change="handleLocaleChange">
+                <option
+                  v-for="localeCode in localeOptions"
+                  :key="localeCode"
+                  :value="localeCode"
+                >
+                  {{ t(`language.options.${localeCode}`) }}
+                </option>
+              </select>
+            </label>
+
             <header class="hero">
               <p class="eyebrow">
-                Your time, your soundtrack
+                {{ t('app.name') }}
               </p>
               <h1 id="page-title">
-                Playlist Timer
+                {{ t('hero.title') }}
               </h1>
               <p class="subtitle">
-                Create Spotify playlists that end exactly when you need them to.
+                {{ t('hero.subtitle') }}
               </p>
             </header>
 
             <form class="playlist-form" @submit.prevent="handlePreviewSubmit">
               <div class="field">
-                <label for="artist">Artist</label>
+                <label for="artist">{{ t('form.artist.label') }}</label>
                 <input
                   id="artist"
                   v-model="artist"
                   type="text"
                   name="artist"
-                  placeholder="e.g. Daft Punk"
+                  :placeholder="t('form.artist.placeholder')"
                   autocomplete="on"
                   required
                 >
               </div>
 
               <div class="field">
-                <label for="duration">Duration in minutes</label>
+                <label for="duration">{{ t('form.duration.label') }}</label>
                 <input
                   id="duration"
                   v-model.number="durationMinutes"
@@ -235,7 +270,7 @@ function getQueryString(value: unknown): string {
                   name="durationMinutes"
                   min="1"
                   step="1"
-                  placeholder="45"
+                  :placeholder="t('form.duration.placeholder')"
                   autocomplete="on"
                   inputmode="numeric"
                   required
@@ -243,24 +278,24 @@ function getQueryString(value: unknown): string {
               </div>
 
               <fieldset class="field">
-                <legend>Accuracy</legend>
+                <legend>{{ t('form.accuracy.label') }}</legend>
                 <div class="select-wrapper">
                   <select id="accuracy" v-model="accuracy" name="accuracy">
                     <option value="exact">
-                      Exact ±10s
+                      {{ t('form.accuracy.exact') }}
                     </option>
                     <option value="balanced">
-                      Balanced ±30s
+                      {{ t('form.accuracy.balanced') }}
                     </option>
                     <option value="flexible">
-                      Flexible ±60s
+                      {{ t('form.accuracy.flexible') }}
                     </option>
                   </select>
                 </div>
               </fieldset>
 
               <button type="submit" :disabled="isLoading">
-                {{ isLoading ? 'Generating…' : 'Generate Preview' }}
+                {{ isLoading ? t('loading.generating') : t('form.generate') }}
               </button>
             </form>
 
@@ -280,10 +315,10 @@ function getQueryString(value: unknown): string {
                 </div>
                 <div>
                   <h2 id="preview-title">
-                    Playlist preview
+                    {{ t('preview.title') }}
                   </h2>
                   <p>
-                    {{ isLoading ? 'Building your mock playlist…' : 'Your generated track list will appear here.' }}
+                    {{ isLoading ? t('preview.building') : t('preview.empty') }}
                   </p>
                 </div>
               </div>
@@ -292,38 +327,38 @@ function getQueryString(value: unknown): string {
                 <div class="preview-heading">
                   <div>
                     <h2 id="preview-title">
-                      Playlist preview
+                      {{ t('preview.title') }}
                     </h2>
-                    <p>Mock tracks for {{ preview.artist.name }}</p>
+                    <p>{{ t('preview.tracksFor', { artist: preview.artist.name }) }}</p>
                   </div>
                   <span
                     class="preview-status"
                     :class="{ 'preview-status--success': preview.isWithinTolerance }"
                   >
-                    {{ preview.isWithinTolerance ? 'Within tolerance' : 'Best effort' }}
+                    {{ preview.isWithinTolerance ? t('preview.withinTolerance') : t('preview.outsideTolerance') }}
                   </span>
                 </div>
 
                 <dl class="preview-stats">
                   <div>
-                    <dt>Target</dt>
+                    <dt>{{ t('preview.target') }}</dt>
                     <dd>{{ formatDuration(preview.targetDurationMs) }}</dd>
                   </div>
                   <div>
-                    <dt>Actual</dt>
+                    <dt>{{ t('preview.actual') }}</dt>
                     <dd>{{ formatDuration(preview.actualDurationMs) }}</dd>
                   </div>
                   <div>
-                    <dt>Difference</dt>
+                    <dt>{{ t('preview.difference') }}</dt>
                     <dd>{{ formatDuration(preview.differenceMs) }}</dd>
                   </div>
                 </dl>
 
-                <ol class="track-list">
+                <ol class="track-list" :aria-label="t('preview.tracks')">
                   <li v-for="track in preview.tracks" :key="track.id">
                     <div>
                       <strong>{{ track.name }}</strong>
-                      <span>{{ track.artist }}{{ track.isCue ? ' · Cue' : '' }}</span>
+                      <span>{{ track.artist }}{{ track.isCue ? ` · ${t('preview.cue')}` : '' }}</span>
                     </div>
                     <time :datetime="`PT${Math.round(track.durationMs / 1000)}S`">
                       {{ formatDuration(track.durationMs) }}
@@ -338,16 +373,18 @@ function getQueryString(value: unknown): string {
                     :disabled="isExporting"
                     @click="startSpotifyLogin"
                   >
-                    {{ isExporting ? 'Exportingâ€¦' : 'Export to Spotify' }}
+                    {{ isExporting ? t('loading.exporting') : t('form.export') }}
                   </button>
 
                   <a
                     v-else
+                    class="spotify-open-link"
                     :href="spotifyPlaylistUrl"
                     target="_blank"
                     rel="noopener noreferrer"
                   >
-                    Open in Spotify
+                    <span aria-hidden="true">♪</span>
+                    {{ t('preview.openInSpotify') }}
                   </a>
 
                   <p v-if="exportErrorMessage" class="form-error" role="alert">
@@ -362,11 +399,10 @@ function getQueryString(value: unknown): string {
 
           <section class="seo-content" aria-labelledby="seo-title">
             <h2 id="seo-title">
-              Create Spotify playlists by duration
+              {{ t('seo.title') }}
             </h2>
             <p>
-              Playlist Timer will generate playlists based on your chosen artist,
-              target duration, and preferred accuracy.
+              {{ t('seo.description') }}
             </p>
           </section>
 

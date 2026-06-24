@@ -26,4 +26,5 @@ the preview id.
 Accepts `{ "previewId": "..." }`, reads the Spotify access token from the
 httpOnly cookie, creates a playlist in the authorized user's Spotify account,
 and adds preview tracks that have `spotifyUri` via Spotify's playlist items
-endpoint.
+endpoint: `POST /v1/playlists/{playlist_id}/items`. Do not use the deprecated
+`POST /v1/playlists/{playlist_id}/tracks` endpoint for playlist writes.

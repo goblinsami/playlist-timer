@@ -1,6 +1,6 @@
 import { getPreview } from '../../services/previewStore.service'
 import {
-  addTracksToPlaylist,
+  addItemsToPlaylist,
   createPlaylist,
   getCurrentSpotifyUser,
   getSpotifyExportPlaylistPublic,
@@ -73,7 +73,7 @@ export default defineEventHandler(async (event) => {
       uriCount: spotifyUris.length,
     })
 
-    await addTracksWithCleanup(accessToken, playlist, spotifyUris)
+    await addItemsWithCleanup(accessToken, playlist, spotifyUris)
 
     return {
       spotifyPlaylistId: playlist.id,
@@ -95,13 +95,13 @@ export default defineEventHandler(async (event) => {
   }
 })
 
-async function addTracksWithCleanup(
+async function addItemsWithCleanup(
   accessToken: string,
   playlist: SpotifyCreatedPlaylist,
   spotifyUris: string[],
 ): Promise<void> {
   try {
-    await addTracksToPlaylist(accessToken, playlist.id, spotifyUris)
+    await addItemsToPlaylist(accessToken, playlist.id, spotifyUris)
   }
   catch (error: unknown) {
     console.error('[spotify-export]', {

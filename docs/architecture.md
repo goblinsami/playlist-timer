@@ -12,6 +12,7 @@ routes expose the application API.
 - `server/services`: Spotify catalog access, mock cues, and playlist-solving
   orchestration.
 - `server/types`: shared server-side TypeScript types.
+- `locales`: JSON translation files for English, Spanish, and Catalan UI copy.
 - `docs`: product and engineering decisions.
 
 ## Planned services

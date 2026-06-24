@@ -309,7 +309,7 @@ export async function createPlaylist(
   return playlist
 }
 
-export async function addTracksToPlaylist(
+export async function addItemsToPlaylist(
   accessToken: string,
   playlistId: string,
   spotifyUris: string[],
