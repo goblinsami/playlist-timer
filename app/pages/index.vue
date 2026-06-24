@@ -6,6 +6,7 @@ interface PreviewTrack {
   name: string
   artist: string
   durationMs: number
+  spotifyUri?: string
   isCue?: boolean
 }
 
@@ -21,18 +22,50 @@ interface PreviewResponse {
   tracks: PreviewTrack[]
 }
 
+interface SpotifyExportResponse {
+  spotifyPlaylistId: string
+  spotifyUrl: string
+}
+
 const toleranceByAccuracy: Record<Accuracy, number> = {
   exact: 10,
   balanced: 30,
   flexible: 60,
 }
 
-const artist = ref('')
-const durationMinutes = ref<number | null>(null)
+const route = useRoute()
+const router = useRouter()
+const artist = ref('Shakira')
+const durationMinutes = ref<number | null>(7)
 const accuracy = ref<Accuracy>('balanced')
 const preview = ref<PreviewResponse | null>(null)
 const isLoading = ref(false)
+const isExporting = ref(false)
 const errorMessage = ref('')
+const exportErrorMessage = ref('')
+const spotifyPlaylistUrl = ref('')
+
+onMounted(async () => {
+  const previewId = getQueryString(route.query.previewId)
+  const spotifyAuth = getQueryString(route.query.spotifyAuth)
+  const spotifyError = getQueryString(route.query.spotifyError)
+
+  if (spotifyError) {
+    exportErrorMessage.value = spotifyError
+    return
+  }
+
+  if (!previewId) {
+    return
+  }
+
+  await loadStoredPreview(previewId)
+
+  if (spotifyAuth === 'success') {
+    await exportPreviewToSpotify()
+    await router.replace({ path: '/', query: { previewId } })
+  }
+})
 
 async function handlePreviewSubmit(): Promise<void> {
   await generatePreview()
@@ -56,12 +89,73 @@ async function generatePreview(): Promise<void> {
         includeCues: true,
       },
     })
+    exportErrorMessage.value = ''
+    spotifyPlaylistUrl.value = ''
   }
   catch (error: unknown) {
     errorMessage.value = getErrorMessage(error)
   }
   finally {
     isLoading.value = false
+  }
+}
+
+async function loadStoredPreview(previewId: string): Promise<void> {
+  isLoading.value = true
+  errorMessage.value = ''
+
+  try {
+    preview.value = await $fetch<PreviewResponse>(`/api/preview/${previewId}`)
+  }
+  catch (error: unknown) {
+    errorMessage.value = getErrorMessage(error)
+  }
+  finally {
+    isLoading.value = false
+  }
+}
+
+function startSpotifyLogin(): void {
+  const previewId = preview.value?.previewId ?? ''
+
+  if (isExporting.value) {
+    return
+  }
+
+  if (!previewId) {
+    exportErrorMessage.value = 'Preview is missing. Generate a preview before exporting.'
+    return
+  }
+
+  exportErrorMessage.value = ''
+  isExporting.value = true
+  window.location.href = `/api/spotify/login?previewId=${encodeURIComponent(previewId)}`
+}
+
+async function exportPreviewToSpotify(): Promise<void> {
+  if (!preview.value || isExporting.value) {
+    return
+  }
+
+  isExporting.value = true
+  exportErrorMessage.value = ''
+  spotifyPlaylistUrl.value = ''
+
+  try {
+    const result = await $fetch<SpotifyExportResponse>('/api/spotify/export', {
+      method: 'POST',
+      body: {
+        previewId: preview.value.previewId,
+      },
+    })
+
+    spotifyPlaylistUrl.value = result.spotifyUrl
+  }
+  catch (error: unknown) {
+    exportErrorMessage.value = getErrorMessage(error)
+  }
+  finally {
+    isExporting.value = false
   }
 }
 
@@ -75,6 +169,10 @@ function getErrorMessage(error: unknown): string {
     && 'statusMessage' in error.data
     && typeof error.data.statusMessage === 'string'
   ) {
+    if (error.data.statusMessage === 'SPOTIFY_ADD_TRACKS_FORBIDDEN') {
+      return 'Spotify created the playlist but refused adding tracks. The empty playlist was removed if possible. Please check Spotify app permissions and try again.'
+    }
+
     return error.data.statusMessage
   }
 
@@ -87,6 +185,10 @@ function formatDuration(durationMs: number): string {
   const seconds = totalSeconds % 60
 
   return `${minutes}:${seconds.toString().padStart(2, '0')}`
+}
+
+function getQueryString(value: unknown): string {
+  return typeof value === 'string' ? value : ''
 }
 </script>
 
@@ -119,7 +221,7 @@ function formatDuration(durationMs: number): string {
                   type="text"
                   name="artist"
                   placeholder="e.g. Daft Punk"
-                  autocomplete="off"
+                  autocomplete="on"
                   required
                 >
               </div>
@@ -130,10 +232,11 @@ function formatDuration(durationMs: number): string {
                   id="duration"
                   v-model.number="durationMinutes"
                   type="number"
-                  name="duration"
+                  name="durationMinutes"
                   min="1"
                   step="1"
                   placeholder="45"
+                  autocomplete="on"
                   inputmode="numeric"
                   required
                 >
@@ -227,6 +330,30 @@ function formatDuration(durationMs: number): string {
                     </time>
                   </li>
                 </ol>
+
+                <div style="display: grid; gap: 12px; margin-top: 20px;">
+                  <button
+                    v-if="!spotifyPlaylistUrl"
+                    type="button"
+                    :disabled="isExporting"
+                    @click="startSpotifyLogin"
+                  >
+                    {{ isExporting ? 'Exportingâ€¦' : 'Export to Spotify' }}
+                  </button>
+
+                  <a
+                    v-else
+                    :href="spotifyPlaylistUrl"
+                    target="_blank"
+                    rel="noopener noreferrer"
+                  >
+                    Open in Spotify
+                  </a>
+
+                  <p v-if="exportErrorMessage" class="form-error" role="alert">
+                    {{ exportErrorMessage }}
+                  </p>
+                </div>
               </template>
             </section>
 

@@ -7,7 +7,10 @@ const TRACK_SEARCH_LIMIT = 10
 type SpotifyErrorCode =
   | 'ARTIST_NOT_FOUND'
   | 'NO_TRACKS_FOUND'
+  | 'SPOTIFY_ADD_TRACKS_FORBIDDEN'
   | 'SPOTIFY_AUTH_ERROR'
+  | 'SPOTIFY_EXPORT_ERROR'
+  | 'SPOTIFY_SCOPE_ERROR'
   | 'SPOTIFY_SEARCH_ERROR'
 
 interface CachedToken {
@@ -18,6 +21,8 @@ interface CachedToken {
 interface SpotifyTokenResponse {
   access_token?: string
   expires_in?: number
+  scope?: string
+  token_type?: string
 }
 
 interface SpotifyImage {
@@ -59,6 +64,29 @@ export interface SpotifyArtistMatch {
   name: string
   imageUrl?: string
 }
+
+export interface SpotifyUser {
+  id: string
+}
+
+export interface SpotifyCreatedPlaylist {
+  id: string
+  external_urls?: {
+    spotify?: string
+  }
+}
+
+export interface SpotifyUserToken {
+  accessToken: string
+  expiresIn: number
+  scope: string
+  tokenType: string
+}
+
+export const SPOTIFY_EXPORT_SCOPES = [
+  'playlist-modify-private',
+  'playlist-modify-public',
+]
 
 export class SpotifyServiceError extends Error {
   constructor(
@@ -152,6 +180,212 @@ export function getSpotifyAppTokenExpiresInSeconds(): number {
   }
 
   return Math.max(0, Math.floor((cachedToken.expiresAtMs - Date.now()) / 1_000))
+}
+
+export function getSpotifyRedirectUri(): string {
+  const config = useRuntimeConfig()
+
+  return getRuntimeConfigString(config.spotifyRedirectUri)
+}
+
+export function getSpotifyExportPlaylistPublic(): boolean {
+  const config = useRuntimeConfig()
+
+  return getRuntimeConfigString(config.spotifyExportPlaylistPublic) === 'true'
+}
+
+export async function exchangeCodeForToken(code: string): Promise<SpotifyUserToken> {
+  const { clientId, clientSecret } = getSpotifyCredentials()
+  const redirectUri = getSpotifyRedirectUri()
+
+  if (!clientId || !clientSecret || !redirectUri) {
+    throw new SpotifyServiceError(
+      'SPOTIFY_AUTH_ERROR',
+      'Spotify OAuth configuration is not complete.',
+    )
+  }
+
+  const credentials = Buffer.from(`${clientId}:${clientSecret}`).toString('base64')
+  const response = await fetch(SPOTIFY_TOKEN_URL, {
+    method: 'POST',
+    headers: {
+      Authorization: `Basic ${credentials}`,
+      'Content-Type': 'application/x-www-form-urlencoded',
+    },
+    body: new URLSearchParams({
+      grant_type: 'authorization_code',
+      code,
+      redirect_uri: redirectUri,
+    }),
+  })
+
+  if (!response.ok) {
+    const errorBody = await response.text()
+    logSpotifyFailure('oauth token exchange', response.status, errorBody, SPOTIFY_TOKEN_URL)
+
+    throw new SpotifyServiceError(
+      'SPOTIFY_AUTH_ERROR',
+      `Spotify OAuth token exchange failed with status ${response.status}.`,
+    )
+  }
+
+  const data = await response.json() as SpotifyTokenResponse
+
+  logSpotifyStep('oauth token exchange success', {
+    accessTokenExists: Boolean(data.access_token),
+    scope: data.scope ?? '',
+    expiresIn: data.expires_in ?? 0,
+    tokenType: data.token_type ?? '',
+  })
+
+  if (!data.access_token) {
+    throw new SpotifyServiceError(
+      'SPOTIFY_AUTH_ERROR',
+      'Spotify OAuth token response did not include an access token.',
+    )
+  }
+
+  return {
+    accessToken: data.access_token,
+    expiresIn: data.expires_in ?? 3_600,
+    scope: data.scope ?? '',
+    tokenType: data.token_type ?? 'Bearer',
+  }
+}
+
+export function hasRequiredSpotifyExportScopes(scope: string): boolean {
+  const returnedScopes = new Set(scope.split(/\s+/).filter(Boolean))
+
+  return SPOTIFY_EXPORT_SCOPES.every(requiredScope => returnedScopes.has(requiredScope))
+}
+
+export async function getCurrentSpotifyUser(accessToken: string): Promise<SpotifyUser> {
+  const user = await spotifyUserApiFetch<SpotifyUser>(
+    '/me',
+    accessToken,
+    'current user',
+  )
+
+  if (!user.id) {
+    throw new SpotifyServiceError(
+      'SPOTIFY_EXPORT_ERROR',
+      'Spotify user response did not include an id.',
+    )
+  }
+
+  return user
+}
+
+export async function createPlaylist(
+  accessToken: string,
+  userId: string,
+  name: string,
+  description: string,
+  isPublic: boolean,
+): Promise<SpotifyCreatedPlaylist> {
+  void userId
+
+  const playlist = await spotifyUserApiFetch<SpotifyCreatedPlaylist>(
+    '/me/playlists',
+    accessToken,
+    'create playlist',
+    {
+      method: 'POST',
+      body: {
+        name,
+        description,
+        public: isPublic,
+      },
+    },
+  )
+
+  if (!playlist.id) {
+    throw new SpotifyServiceError(
+      'SPOTIFY_EXPORT_ERROR',
+      'Spotify create playlist response did not include an id.',
+    )
+  }
+
+  return playlist
+}
+
+export async function addTracksToPlaylist(
+  accessToken: string,
+  playlistId: string,
+  spotifyUris: string[],
+): Promise<void> {
+  const trackUris = getUniqueTrackUris(spotifyUris).slice(0, 100)
+
+  if (trackUris.length === 0) {
+    return
+  }
+
+  const url = `${SPOTIFY_API_URL}/playlists/${encodeURIComponent(playlistId)}/items`
+
+  logSpotifyStep('add playlist items request', {
+    playlistId,
+    uriCount: trackUris.length,
+    firstUriSample: trackUris[0],
+  })
+
+  const response = await fetch(url, {
+    method: 'POST',
+    headers: {
+      Authorization: `Bearer ${accessToken}`,
+      'Content-Type': 'application/json',
+    },
+    body: JSON.stringify({
+      uris: trackUris,
+    }),
+  })
+
+  if (!response.ok) {
+    const errorBody = await response.text()
+    logSpotifyFailure('add playlist items', response.status, errorBody, url)
+
+    throw new SpotifyServiceError(
+      'SPOTIFY_ADD_TRACKS_FORBIDDEN',
+      `add playlist items failed with status ${response.status}.`,
+    )
+  }
+
+  logSpotifyStep('add playlist items success', {
+    playlistId,
+    uriCount: trackUris.length,
+    status: response.status,
+  })
+}
+
+export async function removePlaylistFromCurrentUser(
+  accessToken: string,
+  playlistId: string,
+): Promise<boolean> {
+  const url = `${SPOTIFY_API_URL}/playlists/${encodeURIComponent(playlistId)}/followers`
+
+  logSpotifyStep('remove playlist request', {
+    playlistId,
+  })
+
+  const response = await fetch(url, {
+    method: 'DELETE',
+    headers: {
+      Authorization: `Bearer ${accessToken}`,
+    },
+  })
+
+  if (!response.ok) {
+    const errorBody = await response.text()
+    logSpotifyFailure('remove playlist', response.status, errorBody, url)
+
+    return false
+  }
+
+  logSpotifyStep('remove playlist success', {
+    playlistId,
+    status: response.status,
+  })
+
+  return true
 }
 
 export async function searchArtistByName(
@@ -312,6 +546,38 @@ async function spotifyApiFetchUrl<T>(
   return await response.json() as T
 }
 
+async function spotifyUserApiFetch<T>(
+  path: string,
+  accessToken: string,
+  stepName: string,
+  options: {
+    method?: 'GET' | 'POST'
+    body?: Record<string, unknown>
+  } = {},
+): Promise<T> {
+  const url = `${SPOTIFY_API_URL}${path}`
+  const response = await fetch(url, {
+    method: options.method ?? 'GET',
+    headers: {
+      Authorization: `Bearer ${accessToken}`,
+      ...(options.body ? { 'Content-Type': 'application/json' } : {}),
+    },
+    body: options.body ? JSON.stringify(options.body) : undefined,
+  })
+
+  if (!response.ok) {
+    const errorBody = await response.text()
+    logSpotifyFailure(stepName, response.status, errorBody, url)
+
+    throw new SpotifyServiceError(
+      'SPOTIFY_EXPORT_ERROR',
+      `${stepName} failed with status ${response.status}.`,
+    )
+  }
+
+  return await response.json() as T
+}
+
 function getSpotifyCredentials(): { clientId: string, clientSecret: string } {
   const config = useRuntimeConfig()
   const clientId = getRuntimeConfigString(config.spotifyClientId)
@@ -325,6 +591,12 @@ function getSpotifyCredentials(): { clientId: string, clientSecret: string } {
 
 function getRuntimeConfigString(value: unknown): string {
   return typeof value === 'string' ? value : ''
+}
+
+function getUniqueTrackUris(spotifyUris: string[]): string[] {
+  return [...new Set(
+    spotifyUris.filter(uri => uri.startsWith('spotify:track:')),
+  )]
 }
 
 function logSpotifyStep(stepName: string, details: Record<string, unknown>): void {

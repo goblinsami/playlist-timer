@@ -7,6 +7,8 @@ export default defineNuxtConfig({
   runtimeConfig: {
     spotifyClientId: process.env.SPOTIFY_CLIENT_ID,
     spotifyClientSecret: process.env.SPOTIFY_CLIENT_SECRET,
+    spotifyRedirectUri: process.env.SPOTIFY_REDIRECT_URI,
+    spotifyExportPlaylistPublic: process.env.SPOTIFY_EXPORT_PLAYLIST_PUBLIC,
   },
   app: {
     head: {
