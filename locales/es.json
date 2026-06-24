@@ -66,7 +66,19 @@
   },
   "seo": {
     "title": "Crea playlists de Spotify por duración",
-    "description": "Playlist Timer generará playlists según el artista, la duración objetivo y la precisión que elijas."
+    "description": "Playlist Timer generará playlists según el artista, la duración objetivo y la precisión que elijas.",
+    "meta": {
+      "title": "Playlist Timer — Crea playlists de Spotify por duración",
+      "description": "Crea playlists de Spotify con una duración concreta. Elige un artista, una duración, ajusta la tolerancia, previsualiza el resultado y expórtalo a Spotify."
+    },
+    "og": {
+      "title": "Playlist Timer — Crea playlists de Spotify por duración",
+      "description": "Crea playlists de Spotify con una duración concreta. Elige un artista, una duración, ajusta la tolerancia, previsualiza el resultado y expórtalo a Spotify."
+    },
+    "twitter": {
+      "title": "Playlist Timer — Crea playlists de Spotify por duración",
+      "description": "Crea playlists de Spotify con una duración concreta. Elige un artista, una duración, ajusta la tolerancia, previsualiza el resultado y expórtalo a Spotify."
+    }
   },
   "language": {
     "label": "Idioma",

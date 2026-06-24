@@ -7,6 +7,7 @@
     "dev": "nuxt dev --host 0.0.0.0",
     "generate": "nuxt generate",
     "preview": "nuxt preview",
+    "typecheck": "nuxi typecheck",
     "test": "vitest run",
     "postinstall": "nuxt prepare"
   },
@@ -17,7 +18,9 @@
     "vue-router": "latest"
   },
   "devDependencies": {
+    "@types/node": "^26.0.0",
     "typescript": "^5.8.3",
-    "vitest": "^3.2.4"
+    "vitest": "^3.2.4",
+    "vue-tsc": "^3.3.5"
   }
 }

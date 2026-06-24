@@ -47,13 +47,31 @@ const errorMessage = ref('')
 const exportErrorMessage = ref('')
 const spotifyPlaylistUrl = ref('')
 const localeOptions: LocaleCode[] = ['en', 'es', 'ca']
+const runtimeConfig = useRuntimeConfig()
+const siteUrl = computed(() => normalizeSiteUrl(runtimeConfig.public.siteUrl))
+const ogImageUrl = computed(() => `${siteUrl.value}/og-image.png`)
+
+useSeoMeta({
+  title: () => t('seo.meta.title'),
+  description: () => t('seo.meta.description'),
+  ogTitle: () => t('seo.og.title'),
+  ogDescription: () => t('seo.og.description'),
+  ogType: 'website',
+  ogImage: () => ogImageUrl.value,
+  twitterCard: 'summary_large_image',
+  twitterTitle: () => t('seo.twitter.title'),
+  twitterDescription: () => t('seo.twitter.description'),
+  twitterImage: () => ogImageUrl.value,
+})
 
 useHead(() => ({
-  title: `${t('hero.title')} · ${t('app.name')}`,
-  meta: [
+  htmlAttrs: {
+    lang: locale.value,
+  },
+  link: [
     {
-      name: 'description',
-      content: t('hero.subtitle'),
+      rel: 'canonical',
+      href: `${siteUrl.value}/`,
     },
   ],
 }))
@@ -205,6 +223,14 @@ function formatDuration(durationMs: number): string {
 
 function getQueryString(value: unknown): string {
   return typeof value === 'string' ? value : ''
+}
+
+function normalizeSiteUrl(value: unknown): string {
+  const rawSiteUrl = typeof value === 'string' && value.trim()
+    ? value.trim()
+    : 'http://127.0.0.1:3000'
+
+  return rawSiteUrl.replace(/\/+$/, '')
 }
 
 function handleLocaleChange(event: Event): void {

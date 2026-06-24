@@ -66,7 +66,19 @@
   },
   "seo": {
     "title": "Create Spotify playlists by duration",
-    "description": "Playlist Timer will generate playlists based on your chosen artist, target duration, and preferred accuracy."
+    "description": "Playlist Timer will generate playlists based on your chosen artist, target duration, and preferred accuracy.",
+    "meta": {
+      "title": "Playlist Timer — Create Spotify playlists by duration",
+      "description": "Create Spotify playlists that match a target duration. Pick an artist, choose a time, set your accuracy, preview the result and export it to Spotify."
+    },
+    "og": {
+      "title": "Playlist Timer — Create Spotify playlists by duration",
+      "description": "Create Spotify playlists that match a target duration. Pick an artist, choose a time, set your accuracy, preview the result and export it to Spotify."
+    },
+    "twitter": {
+      "title": "Playlist Timer — Create Spotify playlists by duration",
+      "description": "Create Spotify playlists that match a target duration. Pick an artist, choose a time, set your accuracy, preview the result and export it to Spotify."
+    }
   },
   "language": {
     "label": "Language",

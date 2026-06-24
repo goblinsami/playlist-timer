@@ -33,6 +33,9 @@ export default defineNuxtConfig({
     spotifyClientSecret: process.env.SPOTIFY_CLIENT_SECRET,
     spotifyRedirectUri: process.env.SPOTIFY_REDIRECT_URI,
     spotifyExportPlaylistPublic: process.env.SPOTIFY_EXPORT_PLAYLIST_PUBLIC,
+    public: {
+      siteUrl: process.env.SITE_URL || 'http://127.0.0.1:3000',
+    },
   },
   typescript: {
     strict: true,
