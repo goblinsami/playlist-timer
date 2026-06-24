@@ -12,16 +12,22 @@ const SPOTIFY_SCOPE_COOKIE = 'spotify_scope'
 export default defineEventHandler(async (event) => {
   const query = getQuery(event)
   const code = typeof query.code === 'string' ? query.code : ''
-  const previewId = typeof query.state === 'string' ? query.state : ''
+  const state = typeof query.state === 'string' ? query.state : ''
+  const parsedState = parseSpotifyState(state)
+  const previewId = parsedState.previewId
   const spotifyError = typeof query.error === 'string' ? query.error : ''
-  const redirectUrl = createAppRedirectUrl(event, previewId)
+  const redirectUrl = createAppRedirectUrl(event, parsedState)
 
   if (spotifyError) {
     redirectUrl.searchParams.set('spotifyError', spotifyError)
     return await sendRedirect(event, redirectUrl.toString())
   }
 
-  if (!code || !previewId || !getPreview(previewId)) {
+  if (
+    !code
+    || (!parsedState.previewId && !parsedState.sourceType)
+    || (previewId && !getPreview(previewId))
+  ) {
     redirectUrl.searchParams.set('spotifyError', 'SPOTIFY_AUTH_ERROR')
     return await sendRedirect(event, redirectUrl.toString())
   }
@@ -36,6 +42,9 @@ export default defineEventHandler(async (event) => {
         scope: token.scope,
         hasPlaylistModifyPrivate: token.scope.split(/\s+/).includes('playlist-modify-private'),
         hasPlaylistModifyPublic: token.scope.split(/\s+/).includes('playlist-modify-public'),
+        hasPlaylistReadPrivate: token.scope.split(/\s+/).includes('playlist-read-private'),
+        hasPlaylistReadCollaborative: token.scope.split(/\s+/).includes('playlist-read-collaborative'),
+        hasUserLibraryRead: token.scope.split(/\s+/).includes('user-library-read'),
       })
 
       redirectUrl.searchParams.set('spotifyError', 'SPOTIFY_SCOPE_ERROR')
@@ -72,13 +81,41 @@ export default defineEventHandler(async (event) => {
   }
 })
 
-function createAppRedirectUrl(event: H3Event, previewId: string): URL {
+function createAppRedirectUrl(
+  event: H3Event,
+  parsedState: { previewId: string, sourceType: string },
+): URL {
   const requestUrl = getRequestURL(event)
   const redirectUrl = new URL('/', requestUrl.origin)
 
-  if (previewId) {
-    redirectUrl.searchParams.set('previewId', previewId)
+  if (parsedState.previewId) {
+    redirectUrl.searchParams.set('previewId', parsedState.previewId)
+  }
+
+  if (parsedState.sourceType) {
+    redirectUrl.searchParams.set('sourceType', parsedState.sourceType)
   }
 
   return redirectUrl
+}
+
+function parseSpotifyState(state: string): { previewId: string, sourceType: string } {
+  if (state.startsWith('preview:')) {
+    return {
+      previewId: state.slice('preview:'.length),
+      sourceType: '',
+    }
+  }
+
+  if (state.startsWith('source:')) {
+    return {
+      previewId: '',
+      sourceType: state.slice('source:'.length),
+    }
+  }
+
+  return {
+    previewId: state,
+    sourceType: '',
+  }
 }

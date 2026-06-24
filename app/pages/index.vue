@@ -1,6 +1,8 @@
 <script setup lang="ts">
 type Accuracy = 'exact' | 'balanced' | 'flexible'
 type LocaleCode = 'en' | 'es' | 'ca'
+type SourceType = 'spotify-search' | 'liked-songs' | 'user-playlist'
+type SelectionMode = 'recent' | 'random'
 
 interface PreviewTrack {
   id: string
@@ -16,6 +18,11 @@ interface PreviewResponse {
   artist: {
     name: string
   }
+  source?: {
+    type: SourceType
+    playlistId?: string
+    playlistName?: string
+  }
   targetDurationMs: number
   actualDurationMs: number
   differenceMs: number
@@ -28,21 +35,53 @@ interface SpotifyExportResponse {
   spotifyUrl: string
 }
 
+interface SpotifySessionResponse {
+  hasAccessToken: boolean
+  hasPlaylistReadPrivate?: boolean
+  hasPlaylistReadCollaborative?: boolean
+  hasUserLibraryRead?: boolean
+}
+
+interface UserPlaylist {
+  id: string
+  name: string
+  ownerId: string
+  totalItems: number
+  imageUrl?: string
+  isCollaborative: boolean
+  isPublic: boolean
+}
+
+interface UserPlaylistsResponse {
+  playlists: UserPlaylist[]
+}
+
 const toleranceByAccuracy: Record<Accuracy, number> = {
   exact: 10,
   balanced: 30,
   flexible: 60,
 }
 
+const sourceOptions: SourceType[] = ['spotify-search', 'liked-songs', 'user-playlist']
+const selectionModeOptions: SelectionMode[] = ['recent', 'random']
 const { t, locale, setLocale } = useI18n()
 const route = useRoute()
 const router = useRouter()
+const sourceType = ref<SourceType>('spotify-search')
+const selectionMode = ref<SelectionMode>('random')
 const artist = ref('Shakira')
 const durationMinutes = ref<number | null>(7)
 const accuracy = ref<Accuracy>('balanced')
+const playlists = ref<UserPlaylist[]>([])
+const selectedPlaylistId = ref('')
 const preview = ref<PreviewResponse | null>(null)
 const isLoading = ref(false)
+const isLoadingPlaylists = ref(false)
 const isExporting = ref(false)
+const hasSpotifyAccessToken = ref(false)
+const hasPlaylistReadPrivate = ref(false)
+const hasPlaylistReadCollaborative = ref(false)
+const hasUserLibraryRead = ref(false)
 const errorMessage = ref('')
 const exportErrorMessage = ref('')
 const spotifyPlaylistUrl = ref('')
@@ -80,6 +119,13 @@ onMounted(async () => {
   const previewId = getQueryString(route.query.previewId)
   const spotifyAuth = getQueryString(route.query.spotifyAuth)
   const spotifyError = getQueryString(route.query.spotifyError)
+  const querySourceType = getSourceType(route.query.sourceType)
+
+  if (querySourceType) {
+    sourceType.value = querySourceType
+  }
+
+  await loadSpotifySession()
 
   if (spotifyError) {
     exportErrorMessage.value = getStatusMessage(spotifyError)
@@ -93,8 +139,17 @@ onMounted(async () => {
   await loadStoredPreview(previewId)
 
   if (spotifyAuth === 'success') {
-    await exportPreviewToSpotify()
-    await router.replace({ path: '/', query: { previewId } })
+    if (previewId) {
+      await exportPreviewToSpotify()
+    }
+    else if (sourceType.value === 'user-playlist') {
+      await loadUserPlaylists()
+    }
+
+    await router.replace({
+      path: '/',
+      query: previewId ? { previewId } : {},
+    })
   }
 })
 
@@ -106,6 +161,9 @@ async function generatePreview(): Promise<void> {
   const requestedArtist = artist.value
   const requestedDurationMinutes = durationMinutes.value
   const requestedAccuracy = accuracy.value
+  const requestedSourceType = sourceType.value
+  const requestedSelectionMode = selectionMode.value
+  const requestedPlaylistId = selectedPlaylistId.value
 
   isLoading.value = true
   errorMessage.value = ''
@@ -114,7 +172,16 @@ async function generatePreview(): Promise<void> {
     preview.value = await $fetch<PreviewResponse>('/api/preview', {
       method: 'POST',
       body: {
-        artist: requestedArtist,
+        sourceType: requestedSourceType,
+        ...(requestedSourceType === 'spotify-search'
+          ? { artist: requestedArtist }
+          : { artistFilter: requestedArtist }),
+        ...(requestedSourceType === 'user-playlist'
+          ? { playlistId: requestedPlaylistId }
+          : {}),
+        ...(requestedSourceType !== 'spotify-search'
+          ? { selectionMode: requestedSelectionMode }
+          : {}),
         durationMinutes: requestedDurationMinutes,
         toleranceSeconds: toleranceByAccuracy[requestedAccuracy],
         includeCues: true,
@@ -146,6 +213,48 @@ async function loadStoredPreview(previewId: string): Promise<void> {
   }
 }
 
+async function loadSpotifySession(): Promise<void> {
+  try {
+    const session = await $fetch<SpotifySessionResponse>('/api/debug/spotify-session')
+
+    hasSpotifyAccessToken.value = session.hasAccessToken
+    hasPlaylistReadPrivate.value = session.hasPlaylistReadPrivate === true
+    hasPlaylistReadCollaborative.value = session.hasPlaylistReadCollaborative === true
+    hasUserLibraryRead.value = session.hasUserLibraryRead === true
+  }
+  catch {
+    hasSpotifyAccessToken.value = false
+    hasPlaylistReadPrivate.value = false
+    hasPlaylistReadCollaborative.value = false
+    hasUserLibraryRead.value = false
+  }
+}
+
+async function loadUserPlaylists(): Promise<void> {
+  if (!hasRequiredSourceAuth.value) {
+    return
+  }
+
+  isLoadingPlaylists.value = true
+  errorMessage.value = ''
+
+  try {
+    const response = await $fetch<UserPlaylistsResponse>('/api/spotify/playlists')
+
+    playlists.value = response.playlists
+
+    if (!selectedPlaylistId.value && response.playlists.length > 0) {
+      selectedPlaylistId.value = response.playlists[0]?.id ?? ''
+    }
+  }
+  catch (error: unknown) {
+    errorMessage.value = getErrorMessage(error)
+  }
+  finally {
+    isLoadingPlaylists.value = false
+  }
+}
+
 function startSpotifyLogin(): void {
   const previewId = preview.value?.previewId ?? ''
 
@@ -161,6 +270,14 @@ function startSpotifyLogin(): void {
   exportErrorMessage.value = ''
   isExporting.value = true
   window.location.href = `/api/spotify/login?previewId=${encodeURIComponent(previewId)}`
+}
+
+function connectSpotifyForSource(): void {
+  if (sourceType.value === 'spotify-search') {
+    return
+  }
+
+  window.location.href = `/api/spotify/login?sourceType=${encodeURIComponent(sourceType.value)}`
 }
 
 async function exportPreviewToSpotify(): Promise<void> {
@@ -225,6 +342,31 @@ function getQueryString(value: unknown): string {
   return typeof value === 'string' ? value : ''
 }
 
+function getSourceType(value: unknown): SourceType | '' {
+  return typeof value === 'string' && sourceOptions.includes(value as SourceType)
+    ? value as SourceType
+    : ''
+}
+
+function getSourceLabelKey(value: SourceType): string {
+  const keys: Record<SourceType, string> = {
+    'spotify-search': 'source.spotifySearch',
+    'liked-songs': 'source.likedSongs',
+    'user-playlist': 'source.myPlaylists',
+  }
+
+  return keys[value]
+}
+
+function getSelectionModeLabelKey(value: SelectionMode): string {
+  const keys: Record<SelectionMode, string> = {
+    recent: 'source.selectionMode.recent',
+    random: 'source.selectionMode.random',
+  }
+
+  return keys[value]
+}
+
 function normalizeSiteUrl(value: unknown): string {
   const rawSiteUrl = typeof value === 'string' && value.trim()
     ? value.trim()
@@ -238,6 +380,38 @@ function handleLocaleChange(event: Event): void {
 
   void setLocale(target.value as LocaleCode)
 }
+
+async function handleSourceChange(): Promise<void> {
+  if (sourceType.value === 'user-playlist' && hasRequiredSourceAuth.value) {
+    await loadUserPlaylists()
+  }
+}
+
+const isPersonalSource = computed(() => sourceType.value !== 'spotify-search')
+const artistInputRequired = computed(() => sourceType.value === 'spotify-search')
+const hasRequiredSourceAuth = computed(() => {
+  if (sourceType.value === 'liked-songs') {
+    return hasSpotifyAccessToken.value && hasUserLibraryRead.value
+  }
+
+  if (sourceType.value === 'user-playlist') {
+    return hasSpotifyAccessToken.value
+      && hasPlaylistReadPrivate.value
+      && hasPlaylistReadCollaborative.value
+  }
+
+  return true
+})
+const isPreviewSubmitDisabled = computed(() =>
+  isLoading.value
+  || (isPersonalSource.value && !hasRequiredSourceAuth.value)
+  || (sourceType.value === 'user-playlist' && !selectedPlaylistId.value),
+)
+const sourceConnectLabel = computed(() =>
+  sourceType.value === 'liked-songs'
+    ? t('source.connectForLikedSongs')
+    : t('source.connectForPlaylists'),
+)
 </script>
 
 <template>
@@ -275,7 +449,89 @@ function handleLocaleChange(event: Event): void {
 
             <form class="playlist-form" @submit.prevent="handlePreviewSubmit">
               <div class="field">
-                <label for="artist">{{ t('form.artist.label') }}</label>
+                <label for="source">{{ t('source.label') }}</label>
+                <div class="select-wrapper">
+                  <select
+                    id="source"
+                    v-model="sourceType"
+                    name="sourceType"
+                    @change="handleSourceChange"
+                  >
+                    <option
+                      v-for="option in sourceOptions"
+                      :key="option"
+                      :value="option"
+                    >
+                      {{ t(getSourceLabelKey(option)) }}
+                    </option>
+                  </select>
+                </div>
+              </div>
+
+              <div
+                v-if="isPersonalSource && !hasRequiredSourceAuth"
+                class="field"
+              >
+                <button
+                  type="button"
+                  @click="connectSpotifyForSource"
+                >
+                  {{ sourceConnectLabel }}
+                </button>
+              </div>
+
+              <div
+                v-if="sourceType === 'user-playlist' && hasRequiredSourceAuth"
+                class="field"
+              >
+                <label for="playlist">{{ t('source.selectPlaylist') }}</label>
+                <div class="select-wrapper">
+                  <select
+                    id="playlist"
+                    v-model="selectedPlaylistId"
+                    name="playlistId"
+                    :disabled="isLoadingPlaylists || playlists.length === 0"
+                  >
+                    <option
+                      v-for="playlist in playlists"
+                      :key="playlist.id"
+                      :value="playlist.id"
+                    >
+                      {{ playlist.name }} · {{ playlist.totalItems }}
+                    </option>
+                  </select>
+                </div>
+                <p v-if="isLoadingPlaylists" class="field-hint">
+                  {{ t('source.loadingPlaylists') }}
+                </p>
+                <p v-else-if="playlists.length === 0" class="field-hint">
+                  {{ t('source.noPlaylistsFound') }}
+                </p>
+              </div>
+
+              <div v-if="isPersonalSource" class="field">
+                <label for="selection-mode">{{ t('source.selectionMode.label') }}</label>
+                <div class="select-wrapper">
+                  <select
+                    id="selection-mode"
+                    v-model="selectionMode"
+                    name="selectionMode"
+                  >
+                    <option
+                      v-for="option in selectionModeOptions"
+                      :key="option"
+                      :value="option"
+                    >
+                      {{ t(getSelectionModeLabelKey(option)) }}
+                    </option>
+                  </select>
+                </div>
+              </div>
+
+              <div class="field">
+                <label for="artist">
+                  {{ artistInputRequired ? t('form.artist.label') : t('source.artistFilterOptional') }}
+                </label>
                 <input
                   id="artist"
                   v-model="artist"
@@ -283,7 +539,7 @@ function handleLocaleChange(event: Event): void {
                   name="artist"
                   :placeholder="t('form.artist.placeholder')"
                   autocomplete="on"
-                  required
+                  :required="artistInputRequired"
                 >
               </div>
 
@@ -320,7 +576,7 @@ function handleLocaleChange(event: Event): void {
                 </div>
               </fieldset>
 
-              <button type="submit" :disabled="isLoading">
+              <button type="submit" :disabled="isPreviewSubmitDisabled">
                 {{ isLoading ? t('loading.generating') : t('form.generate') }}
               </button>
             </form>

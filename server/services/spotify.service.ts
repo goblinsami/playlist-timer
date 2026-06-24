@@ -1,12 +1,20 @@
-import type { Track } from '../types/playlist'
+import type { SelectionMode, Track } from '../types/playlist'
 
 const SPOTIFY_TOKEN_URL = 'https://accounts.spotify.com/api/token'
 const SPOTIFY_API_URL = 'https://api.spotify.com/v1'
 const TRACK_SEARCH_LIMIT = 10
+const PERSONAL_SOURCE_MAX_REQUESTS = 5
+const PERSONAL_SOURCE_PAGE_LIMIT = 20
+const PERSONAL_SOURCE_MAX_ITEMS = 100
 
 type SpotifyErrorCode =
   | 'ARTIST_NOT_FOUND'
+  | 'LIKED_SONGS_LOAD_FAILED'
   | 'NO_TRACKS_FOUND'
+  | 'NO_TRACKS_FOUND_FOR_FILTER'
+  | 'PLAYLIST_ITEMS_FORBIDDEN'
+  | 'PLAYLIST_NOT_FOUND'
+  | 'PLAYLISTS_LOAD_FAILED'
   | 'SPOTIFY_ADD_TRACKS_FORBIDDEN'
   | 'SPOTIFY_AUTH_ERROR'
   | 'SPOTIFY_EXPORT_ERROR'
@@ -57,6 +65,37 @@ interface SpotifySearchTrack {
   duration_ms: number
   uri?: string
   popularity?: number
+  type?: string
+}
+
+interface SpotifyPaging<T> {
+  items?: T[]
+  next?: string | null
+  total?: number
+}
+
+interface SpotifyPlaylistOwner {
+  id?: string
+}
+
+interface SpotifyPlaylist {
+  id?: string
+  name?: string
+  owner?: SpotifyPlaylistOwner
+  tracks?: {
+    total?: number
+  }
+  images?: SpotifyImage[]
+  collaborative?: boolean
+  public?: boolean
+}
+
+interface SpotifyPlaylistItem {
+  track?: SpotifySearchTrack | null
+}
+
+interface SpotifySavedTrackItem {
+  track?: SpotifySearchTrack | null
 }
 
 export interface SpotifyArtistMatch {
@@ -67,6 +106,16 @@ export interface SpotifyArtistMatch {
 
 export interface SpotifyUser {
   id: string
+}
+
+export interface SpotifyUserPlaylist {
+  id: string
+  name: string
+  ownerId: string
+  totalItems: number
+  imageUrl?: string
+  isCollaborative: boolean
+  isPublic: boolean
 }
 
 export interface SpotifyCreatedPlaylist {
@@ -86,6 +135,9 @@ export interface SpotifyUserToken {
 export const SPOTIFY_EXPORT_SCOPES = [
   'playlist-modify-private',
   'playlist-modify-public',
+  'playlist-read-private',
+  'playlist-read-collaborative',
+  'user-library-read',
 ]
 
 export class SpotifyServiceError extends Error {
@@ -274,6 +326,83 @@ export async function getCurrentSpotifyUser(accessToken: string): Promise<Spotif
   }
 
   return user
+}
+
+export async function getCurrentUserPlaylists(
+  accessToken: string,
+): Promise<SpotifyUserPlaylist[]> {
+  const playlistItems = await getPagedSpotifyUserItems<SpotifyPlaylist>(
+    accessToken,
+    '/me/playlists',
+    'current user playlists',
+    'PLAYLISTS_LOAD_FAILED',
+    50,
+  )
+
+  return playlistItems
+    .filter(playlist => playlist.id && playlist.name)
+    .map(playlist => ({
+      id: playlist.id ?? '',
+      name: playlist.name ?? '',
+      ownerId: playlist.owner?.id ?? '',
+      totalItems: playlist.tracks?.total ?? 0,
+      imageUrl: playlist.images?.[0]?.url,
+      isCollaborative: playlist.collaborative === true,
+      isPublic: playlist.public === true,
+    }))
+}
+
+export async function getLikedTracks(
+  accessToken: string,
+  selectionMode: SelectionMode = 'random',
+): Promise<Track[]> {
+  const savedTrackItems = await getSampledSpotifyUserItems<SpotifySavedTrackItem>(
+    accessToken,
+    '/me/tracks',
+    'liked songs',
+    'LIKED_SONGS_LOAD_FAILED',
+    selectionMode,
+  )
+  const tracks = savedTrackItems
+    .map(item => item.track)
+    .filter((track): track is SpotifySearchTrack => isUsableSpotifyTrack(track))
+
+  return dedupeSpotifyTracks(tracks).map(mapSpotifyTrack)
+}
+
+export async function getPlaylistItems(
+  accessToken: string,
+  playlistId: string,
+  selectionMode: SelectionMode = 'random',
+): Promise<Track[]> {
+  const playlistItems = await getSampledSpotifyUserItems<SpotifyPlaylistItem>(
+    accessToken,
+    `/playlists/${encodeURIComponent(playlistId)}/items`,
+    'playlist items',
+    'PLAYLIST_ITEMS_FORBIDDEN',
+    selectionMode,
+  )
+  const tracks = playlistItems
+    .map(item => item.track)
+    .filter((track): track is SpotifySearchTrack =>
+      isUsableSpotifyTrack(track) && (track.type === undefined || track.type === 'track'),
+    )
+
+  return dedupeSpotifyTracks(tracks).map(mapSpotifyTrack)
+}
+
+export function filterTracksByArtist(tracks: Track[], artistFilter: string): Track[] {
+  const normalizedArtistFilter = normalizeName(artistFilter)
+
+  if (!normalizedArtistFilter) {
+    return tracks
+  }
+
+  return tracks.filter(track =>
+    (track.artists?.length ? track.artists : [track.artist]).some(artistName =>
+      normalizeName(artistName).includes(normalizedArtistFilter),
+    ),
+  )
 }
 
 export async function createPlaylist(
@@ -553,9 +682,10 @@ async function spotifyUserApiFetch<T>(
   options: {
     method?: 'GET' | 'POST'
     body?: Record<string, unknown>
+    errorCode?: SpotifyErrorCode
   } = {},
 ): Promise<T> {
-  const url = `${SPOTIFY_API_URL}${path}`
+  const url = path.startsWith('https://') ? path : `${SPOTIFY_API_URL}${path}`
   const response = await fetch(url, {
     method: options.method ?? 'GET',
     headers: {
@@ -570,12 +700,204 @@ async function spotifyUserApiFetch<T>(
     logSpotifyFailure(stepName, response.status, errorBody, url)
 
     throw new SpotifyServiceError(
-      'SPOTIFY_EXPORT_ERROR',
+      getSpotifyUserApiErrorCode(response.status, options.errorCode),
       `${stepName} failed with status ${response.status}.`,
     )
   }
 
   return await response.json() as T
+}
+
+async function getPagedSpotifyUserItems<T>(
+  accessToken: string,
+  path: string,
+  stepName: string,
+  errorCode: SpotifyErrorCode,
+  maxItems: number,
+): Promise<T[]> {
+  const items: T[] = []
+  let offset = 0
+
+  while (items.length < maxItems) {
+    const params = new URLSearchParams({
+      limit: String(Math.min(50, maxItems - items.length)),
+      offset: String(offset),
+    })
+    const separator = path.includes('?') ? '&' : '?'
+    const page = await spotifyUserApiFetch<SpotifyPaging<T>>(
+      `${path}${separator}${params.toString()}`,
+      accessToken,
+      stepName,
+      {
+        errorCode,
+      },
+    )
+    const pageItems = page.items ?? []
+
+    items.push(...pageItems)
+
+    if (!page.next || pageItems.length === 0) {
+      break
+    }
+
+    offset += pageItems.length
+  }
+
+  return items.slice(0, maxItems)
+}
+
+async function getSampledSpotifyUserItems<T>(
+  accessToken: string,
+  path: string,
+  stepName: string,
+  errorCode: SpotifyErrorCode,
+  selectionMode: SelectionMode,
+): Promise<T[]> {
+  if (selectionMode === 'recent') {
+    const items: T[] = []
+    let offset = 0
+    let pagesRequested = 0
+    let totalAvailable: number | undefined
+
+    while (
+      pagesRequested < PERSONAL_SOURCE_MAX_REQUESTS
+      && items.length < PERSONAL_SOURCE_MAX_ITEMS
+    ) {
+      const page = await getSpotifyUserItemsPage<T>(
+        accessToken,
+        path,
+        stepName,
+        errorCode,
+        offset,
+        Math.min(PERSONAL_SOURCE_PAGE_LIMIT, PERSONAL_SOURCE_MAX_ITEMS - items.length),
+      )
+      const pageItems = page.items ?? []
+
+      totalAvailable = page.total
+      pagesRequested += 1
+      items.push(...pageItems)
+
+      if (!page.next || pageItems.length === 0) {
+        break
+      }
+
+      offset += pageItems.length
+    }
+
+    logSpotifyStep('personal source sampling completed', {
+      sourceType: stepName,
+      selectionMode,
+      totalAvailable,
+      pagesRequested,
+      candidateCount: items.length,
+    })
+
+    return items.slice(0, PERSONAL_SOURCE_MAX_ITEMS)
+  }
+
+  const firstPage = await getSpotifyUserItemsPage<T>(
+    accessToken,
+    path,
+    stepName,
+    errorCode,
+    0,
+    PERSONAL_SOURCE_PAGE_LIMIT,
+  )
+  const total = firstPage.total ?? firstPage.items?.length ?? 0
+  const items = [...(firstPage.items ?? [])]
+  const randomOffsets = getRandomOffsets(
+    total,
+    PERSONAL_SOURCE_PAGE_LIMIT,
+    PERSONAL_SOURCE_MAX_REQUESTS - 1,
+  )
+
+  for (const offset of randomOffsets) {
+    if (items.length >= PERSONAL_SOURCE_MAX_ITEMS) {
+      break
+    }
+
+    const page = await getSpotifyUserItemsPage<T>(
+      accessToken,
+      path,
+      stepName,
+      errorCode,
+      offset,
+      Math.min(PERSONAL_SOURCE_PAGE_LIMIT, PERSONAL_SOURCE_MAX_ITEMS - items.length),
+    )
+
+    items.push(...(page.items ?? []))
+  }
+
+  logSpotifyStep('personal source sampling completed', {
+    sourceType: stepName,
+    selectionMode,
+    totalAvailable: total,
+    pagesRequested: 1 + randomOffsets.length,
+    candidateCount: items.length,
+  })
+
+  return items.slice(0, PERSONAL_SOURCE_MAX_ITEMS)
+}
+
+async function getSpotifyUserItemsPage<T>(
+  accessToken: string,
+  path: string,
+  stepName: string,
+  errorCode: SpotifyErrorCode,
+  offset: number,
+  limit: number,
+): Promise<SpotifyPaging<T>> {
+  const params = new URLSearchParams({
+    limit: String(limit),
+    offset: String(offset),
+  })
+  const separator = path.includes('?') ? '&' : '?'
+
+  return await spotifyUserApiFetch<SpotifyPaging<T>>(
+    `${path}${separator}${params.toString()}`,
+    accessToken,
+    stepName,
+    {
+      errorCode,
+    },
+  )
+}
+
+function getRandomOffsets(total: number, limit: number, maxOffsets: number): number[] {
+  if (maxOffsets <= 0 || total <= limit) {
+    return []
+  }
+
+  const maxOffset = Math.max(0, total - limit)
+  const targetOffsetCount = Math.min(maxOffsets, maxOffset)
+  const offsets = new Set<number>()
+
+  while (offsets.size < targetOffsetCount) {
+    const offset = Math.floor(Math.random() * (maxOffset + 1))
+
+    if (offset !== 0) {
+      offsets.add(offset)
+    }
+  }
+
+  return [...offsets]
+}
+
+function getSpotifyUserApiErrorCode(
+  status: number,
+  requestedErrorCode?: SpotifyErrorCode,
+): SpotifyErrorCode {
+  if (requestedErrorCode === 'PLAYLIST_ITEMS_FORBIDDEN') {
+    if (status === 404) {
+      return 'PLAYLIST_NOT_FOUND'
+    }
+
+    if (status === 403) {
+      return 'PLAYLIST_ITEMS_FORBIDDEN'
+    }
+  }
+
+  return requestedErrorCode ?? 'SPOTIFY_EXPORT_ERROR'
 }
 
 function getSpotifyCredentials(): { clientId: string, clientSecret: string } {
@@ -640,26 +962,29 @@ function selectBestArtistMatch(
 
 function dedupeSpotifyTracks(tracks: SpotifySearchTrack[]): SpotifySearchTrack[] {
   const seenIds = new Set<string>()
+  const seenUris = new Set<string>()
   const seenNames = new Set<string>()
   const uniqueTracks: SpotifySearchTrack[] = []
 
   for (const track of tracks) {
+    if (!isUsableSpotifyTrack(track)) {
+      continue
+    }
+
+    const trackId = track.id as string
+    const trackUri = track.uri as string
+    const normalizedTrackName = normalizeName(track.name)
+
     if (
-      !track.id
-      || !track.uri
-      || !Number.isFinite(track.duration_ms)
-      || track.duration_ms <= 0
+      seenIds.has(trackId)
+      || seenUris.has(trackUri)
+      || seenNames.has(normalizedTrackName)
     ) {
       continue
     }
 
-    const normalizedTrackName = normalizeName(track.name)
-
-    if (seenIds.has(track.id) || seenNames.has(normalizedTrackName)) {
-      continue
-    }
-
-    seenIds.add(track.id)
+    seenIds.add(trackId)
+    seenUris.add(trackUri)
     seenNames.add(normalizedTrackName)
     uniqueTracks.push(track)
   }
@@ -674,6 +999,7 @@ function mapSpotifyTrack(
     id: track.id ?? track.uri ?? track.name,
     name: track.name,
     artist: formatTrackArtists(track.artists),
+    artists: getTrackArtistNames(track.artists),
     durationMs: track.duration_ms,
     spotifyUri: track.uri,
     popularity: track.popularity,
@@ -681,12 +1007,29 @@ function mapSpotifyTrack(
   }
 }
 
-function formatTrackArtists(artists?: SpotifyTrackArtist[]): string {
-  const artistNames = artists
-    ?.map(artist => artist.name)
-    .filter(Boolean)
+function isUsableSpotifyTrack(
+  track: SpotifySearchTrack | null | undefined,
+): track is SpotifySearchTrack {
+  return Boolean(
+    track
+    && track.id
+    && track.uri
+    && track.name
+    && Number.isFinite(track.duration_ms)
+    && track.duration_ms > 0,
+  )
+}
 
-  return artistNames?.length ? artistNames.join(', ') : 'Unknown artist'
+function formatTrackArtists(artists?: SpotifyTrackArtist[]): string {
+  const artistNames = getTrackArtistNames(artists)
+
+  return artistNames.length ? artistNames.join(', ') : 'Unknown artist'
+}
+
+function getTrackArtistNames(artists?: SpotifyTrackArtist[]): string[] {
+  return artists
+    ?.map(artist => artist.name)
+    .filter(Boolean) ?? []
 }
 
 function normalizeName(value: string): string {

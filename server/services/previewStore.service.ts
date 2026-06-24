@@ -1,5 +1,5 @@
 import { randomUUID } from 'node:crypto'
-import type { Track } from '../types/playlist'
+import type { PreviewSource, Track } from '../types/playlist'
 
 const PREVIEW_TTL_MS = 30 * 60 * 1_000
 
@@ -18,6 +18,7 @@ export interface StoredPreview {
   toleranceMs: number
   isWithinTolerance: boolean
   tracks: Track[]
+  source?: PreviewSource
   createdAt: string
   expiresAt: string
 }

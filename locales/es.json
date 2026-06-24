@@ -26,6 +26,23 @@
     "export": "Exportar a Spotify",
     "exporting": "Exportando…"
   },
+  "source": {
+    "label": "Fuente",
+    "spotifySearch": "Búsqueda de Spotify",
+    "likedSongs": "Canciones que te gustan",
+    "myPlaylists": "Mis playlists",
+    "connectForLikedSongs": "Conecta Spotify para usar tus canciones favoritas",
+    "connectForPlaylists": "Conecta Spotify para cargar tus playlists",
+    "selectPlaylist": "Selecciona una playlist",
+    "artistFilterOptional": "Filtro de artista (opcional)",
+    "loadingPlaylists": "Cargando playlists…",
+    "noPlaylistsFound": "No se han encontrado playlists.",
+    "selectionMode": {
+      "label": "Modo de selección",
+      "recent": "Recientes primero",
+      "random": "Aleatorio"
+    }
+  },
   "preview": {
     "title": "Preview de la playlist",
     "empty": "Tu lista de canciones generada aparecerá aquí.",
@@ -51,14 +68,26 @@
     "previewFailed": "No se ha podido generar la preview. Inténtalo de nuevo.",
     "exportFailed": "No se ha podido exportar a Spotify. Inténtalo de nuevo.",
     "missingPreview": "Falta la preview. Genera una preview antes de exportar.",
+    "noTracksFoundForFilter": "Ninguna canción coincide con ese filtro de artista.",
+    "playlistItemsForbidden": "Spotify rechazó el acceso a los items de esa playlist. Revisa los permisos e inténtalo de nuevo.",
+    "likedSongsLoadFailed": "No se han podido cargar tus canciones favoritas de Spotify.",
+    "playlistsLoadFailed": "No se han podido cargar tus playlists de Spotify.",
+    "invalidSelectionMode": "El modo de selección debe ser Recientes primero o Aleatorio.",
     "spotifyAddItemsForbidden": "Spotify creó la playlist, pero rechazó añadir canciones. La playlist vacía se eliminó si fue posible. Revisa los permisos de la app de Spotify e inténtalo de nuevo.",
     "codes": {
       "SPOTIFY_ADD_TRACKS_FORBIDDEN": "Spotify creó la playlist, pero rechazó añadir canciones. La playlist vacía se eliminó si fue posible. Revisa los permisos de la app de Spotify e inténtalo de nuevo.",
-      "SPOTIFY_AUTH_REQUIRED": "Conecta Spotify antes de exportar.",
+      "SPOTIFY_AUTH_REQUIRED": "Conecta Spotify para continuar.",
       "SPOTIFY_AUTH_ERROR": "La autorización de Spotify ha fallado. Inténtalo de nuevo.",
       "SPOTIFY_SCOPE_ERROR": "Spotify no concedió los permisos necesarios para playlists. Borra las cookies y autoriza de nuevo.",
       "PREVIEW_NOT_FOUND": "Esta preview ha caducado o no se ha encontrado.",
-      "NO_EXPORTABLE_TRACKS": "Esta preview no tiene canciones de Spotify para exportar."
+      "NO_EXPORTABLE_TRACKS": "Esta preview no tiene canciones de Spotify para exportar.",
+      "NO_TRACKS_FOUND": "No se han encontrado canciones válidas de Spotify para esta fuente.",
+      "NO_TRACKS_FOUND_FOR_FILTER": "Ninguna canción coincide con ese filtro de artista.",
+      "PLAYLISTS_LOAD_FAILED": "No se han podido cargar tus playlists de Spotify.",
+      "PLAYLIST_NOT_FOUND": "No se ha encontrado esa playlist.",
+      "PLAYLIST_ITEMS_FORBIDDEN": "Spotify rechazó el acceso a los items de esa playlist. Revisa los permisos e inténtalo de nuevo.",
+      "LIKED_SONGS_LOAD_FAILED": "No se han podido cargar tus canciones favoritas de Spotify.",
+      "INVALID_SELECTION_MODE": "El modo de selección debe ser Recientes primero o Aleatorio."
     }
   },
   "ads": {

@@ -76,7 +76,7 @@ select {
 .language-switcher select {
   width: auto;
   min-height: 36px;
-  padding: 0 32px 0 12px;
+  padding: 0 40px 0 12px;
   border-radius: 999px;
   background: #f8faf8;
   color: #2b3730;
@@ -127,6 +127,13 @@ h1 {
   border: 0;
 }
 
+.field-hint {
+  margin: 0;
+  color: #657169;
+  font-size: 0.86rem;
+  line-height: 1.45;
+}
+
 label,
 legend {
   color: #2b3730;
@@ -138,7 +145,7 @@ input,
 select {
   width: 100%;
   min-height: 50px;
-  padding: 0 14px;
+  padding: 0 40px 0 14px;
   border: 1px solid #cad6cd;
   border-radius: 12px;
   outline: none;

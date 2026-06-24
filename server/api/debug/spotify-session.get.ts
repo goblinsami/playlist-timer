@@ -11,5 +11,8 @@ export default defineEventHandler((event) => {
     scope,
     hasPlaylistModifyPrivate: scopes.includes('playlist-modify-private'),
     hasPlaylistModifyPublic: scopes.includes('playlist-modify-public'),
+    hasPlaylistReadPrivate: scopes.includes('playlist-read-private'),
+    hasPlaylistReadCollaborative: scopes.includes('playlist-read-collaborative'),
+    hasUserLibraryRead: scopes.includes('user-library-read'),
   }
 })

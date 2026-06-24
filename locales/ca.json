@@ -26,6 +26,23 @@
     "export": "Exporta a Spotify",
     "exporting": "Exportant…"
   },
+  "source": {
+    "label": "Font",
+    "spotifySearch": "Cerca de Spotify",
+    "likedSongs": "Cançons que t'agraden",
+    "myPlaylists": "Les meves playlists",
+    "connectForLikedSongs": "Connecta Spotify per usar les cançons que t'agraden",
+    "connectForPlaylists": "Connecta Spotify per carregar les teves playlists",
+    "selectPlaylist": "Selecciona una playlist",
+    "artistFilterOptional": "Filtre d'artista (opcional)",
+    "loadingPlaylists": "Carregant playlists…",
+    "noPlaylistsFound": "No s'han trobat playlists.",
+    "selectionMode": {
+      "label": "Mode de selecció",
+      "recent": "Recents primer",
+      "random": "Aleatori"
+    }
+  },
   "preview": {
     "title": "Previsualització de la playlist",
     "empty": "La llista de cançons generada apareixerà aquí.",
@@ -51,14 +68,26 @@
     "previewFailed": "No s'ha pogut generar la previsualització. Torna-ho a provar.",
     "exportFailed": "No s'ha pogut exportar a Spotify. Torna-ho a provar.",
     "missingPreview": "Falta la previsualització. Genera'n una abans d'exportar.",
+    "noTracksFoundForFilter": "Cap cançó coincideix amb aquest filtre d'artista.",
+    "playlistItemsForbidden": "Spotify ha rebutjat l'accés als items d'aquesta playlist. Revisa els permisos i torna-ho a provar.",
+    "likedSongsLoadFailed": "No s'han pogut carregar les cançons que t'agraden de Spotify.",
+    "playlistsLoadFailed": "No s'han pogut carregar les teves playlists de Spotify.",
+    "invalidSelectionMode": "El mode de selecció ha de ser Recents primer o Aleatori.",
     "spotifyAddItemsForbidden": "Spotify ha creat la playlist, però ha rebutjat afegir-hi cançons. La playlist buida s'ha eliminat si ha estat possible. Revisa els permisos de l'app de Spotify i torna-ho a provar.",
     "codes": {
       "SPOTIFY_ADD_TRACKS_FORBIDDEN": "Spotify ha creat la playlist, però ha rebutjat afegir-hi cançons. La playlist buida s'ha eliminat si ha estat possible. Revisa els permisos de l'app de Spotify i torna-ho a provar.",
-      "SPOTIFY_AUTH_REQUIRED": "Connecta Spotify abans d'exportar.",
+      "SPOTIFY_AUTH_REQUIRED": "Connecta Spotify per continuar.",
       "SPOTIFY_AUTH_ERROR": "L'autorització de Spotify ha fallat. Torna-ho a provar.",
       "SPOTIFY_SCOPE_ERROR": "Spotify no ha concedit els permisos necessaris per a playlists. Esborra les cookies i autoritza de nou.",
       "PREVIEW_NOT_FOUND": "Aquesta previsualització ha caducat o no s'ha trobat.",
-      "NO_EXPORTABLE_TRACKS": "Aquesta previsualització no té cançons de Spotify per exportar."
+      "NO_EXPORTABLE_TRACKS": "Aquesta previsualització no té cançons de Spotify per exportar.",
+      "NO_TRACKS_FOUND": "No s'han trobat cançons vàlides de Spotify per a aquesta font.",
+      "NO_TRACKS_FOUND_FOR_FILTER": "Cap cançó coincideix amb aquest filtre d'artista.",
+      "PLAYLISTS_LOAD_FAILED": "No s'han pogut carregar les teves playlists de Spotify.",
+      "PLAYLIST_NOT_FOUND": "No s'ha trobat aquesta playlist.",
+      "PLAYLIST_ITEMS_FORBIDDEN": "Spotify ha rebutjat l'accés als items d'aquesta playlist. Revisa els permisos i torna-ho a provar.",
+      "LIKED_SONGS_LOAD_FAILED": "No s'han pogut carregar les cançons que t'agraden de Spotify.",
+      "INVALID_SELECTION_MODE": "El mode de selecció ha de ser Recents primer o Aleatori."
     }
   },
   "ads": {

@@ -26,6 +26,23 @@
     "export": "Export to Spotify",
     "exporting": "Exporting…"
   },
+  "source": {
+    "label": "Source",
+    "spotifySearch": "Spotify Search",
+    "likedSongs": "Liked Songs",
+    "myPlaylists": "My Playlists",
+    "connectForLikedSongs": "Connect Spotify to use Liked Songs",
+    "connectForPlaylists": "Connect Spotify to load playlists",
+    "selectPlaylist": "Select playlist",
+    "artistFilterOptional": "Artist filter (optional)",
+    "loadingPlaylists": "Loading playlists…",
+    "noPlaylistsFound": "No playlists found.",
+    "selectionMode": {
+      "label": "Selection mode",
+      "recent": "Recent first",
+      "random": "Random"
+    }
+  },
   "preview": {
     "title": "Playlist preview",
     "empty": "Your generated track list will appear here.",
@@ -51,14 +68,26 @@
     "previewFailed": "Unable to generate a preview. Please try again.",
     "exportFailed": "Unable to export to Spotify. Please try again.",
     "missingPreview": "Preview is missing. Generate a preview before exporting.",
+    "noTracksFoundForFilter": "No tracks matched that artist filter.",
+    "playlistItemsForbidden": "Spotify refused access to that playlist's items. Check playlist permissions and try again.",
+    "likedSongsLoadFailed": "Unable to load your Liked Songs from Spotify.",
+    "playlistsLoadFailed": "Unable to load your Spotify playlists.",
+    "invalidSelectionMode": "Selection mode must be Recent first or Random.",
     "spotifyAddItemsForbidden": "Spotify created the playlist but refused adding items. The empty playlist was removed if possible. Please check Spotify app permissions and try again.",
     "codes": {
       "SPOTIFY_ADD_TRACKS_FORBIDDEN": "Spotify created the playlist but refused adding items. The empty playlist was removed if possible. Please check Spotify app permissions and try again.",
-      "SPOTIFY_AUTH_REQUIRED": "Please connect Spotify before exporting.",
+      "SPOTIFY_AUTH_REQUIRED": "Please connect Spotify to continue.",
       "SPOTIFY_AUTH_ERROR": "Spotify authorization failed. Please try again.",
       "SPOTIFY_SCOPE_ERROR": "Spotify did not grant the required playlist permissions. Clear cookies and authorize again.",
       "PREVIEW_NOT_FOUND": "This preview expired or could not be found.",
-      "NO_EXPORTABLE_TRACKS": "This preview has no Spotify tracks to export."
+      "NO_EXPORTABLE_TRACKS": "This preview has no Spotify tracks to export.",
+      "NO_TRACKS_FOUND": "No usable Spotify tracks were found for this source.",
+      "NO_TRACKS_FOUND_FOR_FILTER": "No tracks matched that artist filter.",
+      "PLAYLISTS_LOAD_FAILED": "Unable to load your Spotify playlists.",
+      "PLAYLIST_NOT_FOUND": "That playlist could not be found.",
+      "PLAYLIST_ITEMS_FORBIDDEN": "Spotify refused access to that playlist's items. Check playlist permissions and try again.",
+      "LIKED_SONGS_LOAD_FAILED": "Unable to load your Liked Songs from Spotify.",
+      "INVALID_SELECTION_MODE": "Selection mode must be Recent first or Random."
     }
   },
   "ads": {
