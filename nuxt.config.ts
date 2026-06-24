@@ -29,12 +29,12 @@ export default defineNuxtConfig({
     ],
   },
   runtimeConfig: {
-    spotifyClientId: process.env.SPOTIFY_CLIENT_ID,
-    spotifyClientSecret: process.env.SPOTIFY_CLIENT_SECRET,
-    spotifyRedirectUri: process.env.SPOTIFY_REDIRECT_URI,
-    spotifyExportPlaylistPublic: process.env.SPOTIFY_EXPORT_PLAYLIST_PUBLIC,
+    spotifyClientId: '',
+    spotifyClientSecret: '',
+    spotifyRedirectUri: '',
+    spotifyExportPlaylistPublic: 'false',
     public: {
-      siteUrl: process.env.SITE_URL || 'http://127.0.0.1:3000',
+      siteUrl: process.env.NUXT_PUBLIC_SITE_URL || 'http://127.0.0.1:3000',
     },
   },
   typescript: {

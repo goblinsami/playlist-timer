@@ -4,7 +4,7 @@ Playlist preview and playlist export use separate Spotify authorization flows.
 
 - Preview with the Spotify Search source uses Spotify Client Credentials because
   it only needs public catalog data.
-- Preview requires `SPOTIFY_CLIENT_ID` and `SPOTIFY_CLIENT_SECRET` on the
+- Preview requires `NUXT_SPOTIFY_CLIENT_ID` and `NUXT_SPOTIFY_CLIENT_SECRET` on the
   server.
 - Preview searches the requested artist and public track catalog, then passes
   those tracks into the independent duration solver.
@@ -45,7 +45,11 @@ For local Spotify OAuth testing, keep the app URL and redirect URI consistent.
 
 - In the Spotify Dashboard, set the Redirect URI exactly to:
   `http://127.0.0.1:3000/api/spotify/callback`
-- Set `SPOTIFY_REDIRECT_URI` in `.env` to the same value.
+- Set `NUXT_SPOTIFY_REDIRECT_URI` in `.env` and Netlify to the same value.
+- Set Spotify env vars in Netlify with Nuxt runtime names:
+  `NUXT_SPOTIFY_CLIENT_ID`, `NUXT_SPOTIFY_CLIENT_SECRET`,
+  `NUXT_SPOTIFY_REDIRECT_URI`, and
+  `NUXT_SPOTIFY_EXPORT_PLAYLIST_PUBLIC`.
 - Start the dev server with:
   `npm run dev`
 - Open the app using:

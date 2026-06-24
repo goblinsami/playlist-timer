@@ -17,16 +17,16 @@ phase yet.
 
 ## Environment
 
-Set `SITE_URL` to the public deployed origin:
+Set `NUXT_PUBLIC_SITE_URL` to the public deployed origin:
 
 ```env
-SITE_URL=https://example.com
+NUXT_PUBLIC_SITE_URL=https://example.com
 ```
 
 For local development, the default is:
 
 ```env
-SITE_URL=http://127.0.0.1:3000
+NUXT_PUBLIC_SITE_URL=http://127.0.0.1:3000
 ```
 
 ## OG image

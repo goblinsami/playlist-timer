@@ -24,3 +24,18 @@ routes expose the application API.
 
 Spotify access and solver logic will remain separate so each can be tested and
 changed independently.
+
+## Runtime configuration
+
+Spotify credentials are server-only Nuxt runtime config values. Do not put
+Spotify secrets in `runtimeConfig.public`.
+
+Use these environment variable names in Netlify and local `.env` files:
+
+- `NUXT_SPOTIFY_CLIENT_ID`
+- `NUXT_SPOTIFY_CLIENT_SECRET`
+- `NUXT_SPOTIFY_REDIRECT_URI`
+- `NUXT_SPOTIFY_EXPORT_PLAYLIST_PUBLIC`
+- `NUXT_PUBLIC_SITE_URL`
+
+`NUXT_PUBLIC_SITE_URL` is the only public runtime value from this list.
