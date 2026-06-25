@@ -617,6 +617,10 @@ function isNullableNumber(value: unknown): value is number | null {
   return value === null || typeof value === 'number'
 }
 
+function isIgnorableReadyPlayerError(message: string): boolean {
+  return spotifyPlayer.isReady.value && message === 'Invalid token scopes.'
+}
+
 function getSourceLabelKey(value: SourceType): string {
   const keys: Record<SourceType, string> = {
     'spotify-search': 'source.spotifySearch',
@@ -719,7 +723,7 @@ const timerMixNextTrack = computed(() =>
   timerMix.value?.tracks[timerMixPlayback.currentTrackIndex.value + 1],
 )
 const spotifyPlayerError = computed(() =>
-  spotifyPlayer.error.value
+  spotifyPlayer.error.value && !isIgnorableReadyPlayerError(spotifyPlayer.error.value)
     ? getStatusMessage(spotifyPlayer.error.value)
     : '',
 )
