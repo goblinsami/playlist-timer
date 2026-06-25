@@ -45,6 +45,9 @@ export default defineEventHandler(async (event) => {
         hasPlaylistReadPrivate: token.scope.split(/\s+/).includes('playlist-read-private'),
         hasPlaylistReadCollaborative: token.scope.split(/\s+/).includes('playlist-read-collaborative'),
         hasUserLibraryRead: token.scope.split(/\s+/).includes('user-library-read'),
+        hasStreaming: token.scope.split(/\s+/).includes('streaming'),
+        hasUserReadPlaybackState: token.scope.split(/\s+/).includes('user-read-playback-state'),
+        hasUserModifyPlaybackState: token.scope.split(/\s+/).includes('user-modify-playback-state'),
       })
 
       redirectUrl.searchParams.set('spotifyError', 'SPOTIFY_SCOPE_ERROR')

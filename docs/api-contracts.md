@@ -97,3 +97,95 @@ Requires the Spotify OAuth cookie and returns simplified current-user playlists:
   ]
 }
 ```
+
+## `GET /api/spotify/token`
+
+Requires the Spotify OAuth cookie and returns the current user access token for
+the Spotify Web Playback SDK:
+
+```json
+{
+  "accessToken": "..."
+}
+```
+
+Missing tokens return `SPOTIFY_AUTH_REQUIRED`. The endpoint never exposes the
+Spotify client secret.
+
+## `POST /api/timer-mix/prepare`
+
+Prepares an experimental live Timer Mix. This does not create or export a
+Spotify playlist.
+
+Spotify Search source:
+
+```json
+{
+  "sourceType": "spotify-search",
+  "artist": "Chayanne",
+  "durationMinutes": 5,
+  "songCount": 3,
+  "fadeSeconds": 5,
+  "selectionMode": "random"
+}
+```
+
+Liked Songs source:
+
+```json
+{
+  "sourceType": "liked-songs",
+  "artistFilter": "Chayanne",
+  "durationMinutes": 5,
+  "songCount": 3,
+  "fadeSeconds": 5,
+  "selectionMode": "random"
+}
+```
+
+User Playlist source:
+
+```json
+{
+  "sourceType": "user-playlist",
+  "playlistId": "spotify-playlist-id",
+  "artistFilter": "Chayanne",
+  "durationMinutes": 5,
+  "songCount": 3,
+  "fadeSeconds": 5,
+  "selectionMode": "random"
+}
+```
+
+Response:
+
+```json
+{
+  "mixId": "...",
+  "source": {
+    "type": "liked-songs",
+    "artistFilter": "Chayanne",
+    "selectionMode": "random"
+  },
+  "totalDurationMs": 300000,
+  "songCount": 3,
+  "fadeDurationMs": 5000,
+  "blockDurationMs": 100000,
+  "tracks": [
+    {
+      "id": "...",
+      "name": "...",
+      "artist": "...",
+      "artists": ["..."],
+      "durationMs": 210000,
+      "spotifyUri": "spotify:track:..."
+    }
+  ],
+  "warnings": []
+}
+```
+
+Validation limits are 1-30 minutes, 1-10 songs, and 0-15 fade seconds.
+`selectionMode` can be `random` or `recent`. Liked Songs and My Playlists
+require OAuth. Optional artist filters are case-insensitive and match any artist
+name on the track.

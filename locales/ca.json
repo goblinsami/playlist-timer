@@ -10,11 +10,11 @@
   "form": {
     "artist": {
       "label": "Artista",
-      "placeholder": "p. ex. Daft Punk"
+      "placeholder": "Shakira"
     },
     "duration": {
       "label": "Durada en minuts",
-      "placeholder": "45"
+      "placeholder": "7"
     },
     "accuracy": {
       "label": "Precisió",
@@ -25,6 +25,11 @@
     "generate": "Genera la previsualització",
     "export": "Exporta a Spotify",
     "exporting": "Exportant…"
+  },
+  "mode": {
+    "label": "Mode",
+    "playlistTimer": "Playlist Timer",
+    "timerMix": "Timer Mix"
   },
   "source": {
     "label": "Font",
@@ -42,6 +47,34 @@
       "recent": "Recents primer",
       "random": "Aleatori"
     }
+  },
+  "timerMix": {
+    "title": "Timer Mix",
+    "description": "Prepara una mescla cronometrada en directe que es reprodueix en aquest navegador en comptes d exportar una playlist.",
+    "source": "Font",
+    "spotifySearch": "Cerca de Spotify",
+    "likedSongs": "Cancons que t agraden",
+    "myPlaylists": "Les meves playlists",
+    "artist": "Artista",
+    "artistFilterOptional": "Filtre d artista (opcional)",
+    "duration": "Durada en minuts",
+    "songCount": "Cancons",
+    "fadeSeconds": "Segons de fade",
+    "selectionMode": "Mode de seleccio",
+    "random": "Aleatori",
+    "recent": "Recents primer",
+    "prepare": "Prepara el mix",
+    "connectSpotify": "Connecta Spotify",
+    "connecting": "Connectant...",
+    "start": "Inicia Timer Mix",
+    "stop": "Atura",
+    "requiresPremium": "Timer Mix requereix Spotify Premium i mante la reproduccio dins d aquest navegador.",
+    "currentTrack": "Canco actual",
+    "nextTrack": "Canco seguent",
+    "remaining": "Restant",
+    "blockDuration": "Durada del bloc",
+    "sdkError": "Error del reproductor de Spotify:",
+    "authRequired": "Connecta Spotify per usar Timer Mix."
   },
   "preview": {
     "title": "Previsualització de la playlist",
@@ -87,7 +120,21 @@
       "PLAYLIST_NOT_FOUND": "No s'ha trobat aquesta playlist.",
       "PLAYLIST_ITEMS_FORBIDDEN": "Spotify ha rebutjat l'accés als items d'aquesta playlist. Revisa els permisos i torna-ho a provar.",
       "LIKED_SONGS_LOAD_FAILED": "No s'han pogut carregar les cançons que t'agraden de Spotify.",
-      "INVALID_SELECTION_MODE": "El mode de selecció ha de ser Recents primer o Aleatori."
+      "INVALID_SELECTION_MODE": "El mode de selecció ha de ser Recents primer o Aleatori.",
+      "NOT_ENOUGH_TRACKS": "No hi ha prou cancons valides per a aquest Timer Mix.",
+      "SHORT_TRACK_WARNING": "Algunes cancons seleccionades son mes curtes que el seu bloc i podrien acabar abans.",
+      "ARTIST_REQUIRED": "L artista es obligatori.",
+      "SOURCE_TYPE_REQUIRED": "La font es obligatoria.",
+      "DURATION_REQUIRED": "La durada ha d estar entre 1 i 30 minuts.",
+      "SONG_COUNT_REQUIRED": "Les cancons han d estar entre 1 i 10.",
+      "INVALID_FADE_SECONDS": "El fade ha d estar entre 0 i 15 segons.",
+      "SPOTIFY_SDK_CONNECT_FAILED": "No s ha pogut connectar el reproductor de Spotify.",
+      "SPOTIFY_SDK_LOAD_FAILED": "No s ha pogut carregar el reproductor de Spotify.",
+      "SPOTIFY_SDK_NOT_READY": "El reproductor de Spotify encara no esta llest.",
+      "TIMER_MIX_PLAY_FAILED": "Spotify ha rebutjat iniciar la reproduccio en aquest dispositiu.",
+      "TIMER_MIX_VOLUME_FAILED": "Spotify ha rebutjat un canvi de volum.",
+      "TIMER_MIX_PAUSE_FAILED": "Spotify ha rebutjat pausar la reproduccio.",
+      "TIMER_MIX_PLAYBACK_FAILED": "La reproduccio de Timer Mix ha fallat."
     }
   },
   "ads": {

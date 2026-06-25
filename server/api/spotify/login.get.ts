@@ -5,7 +5,7 @@ import {
 } from '../../services/spotify.service'
 
 const SPOTIFY_AUTHORIZE_URL = 'https://accounts.spotify.com/authorize'
-const PERSONAL_SOURCE_TYPES = new Set(['liked-songs', 'user-playlist'])
+const LOGIN_SOURCE_TYPES = new Set(['liked-songs', 'user-playlist', 'timer-mix'])
 
 export default defineEventHandler(async (event) => {
   const query = getQuery(event)
@@ -57,7 +57,7 @@ function createSpotifyState(previewId: string, sourceType: string): string {
     return `preview:${previewId}`
   }
 
-  if (PERSONAL_SOURCE_TYPES.has(sourceType)) {
+  if (LOGIN_SOURCE_TYPES.has(sourceType)) {
     return `source:${sourceType}`
   }
 

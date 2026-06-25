@@ -10,11 +10,11 @@
   "form": {
     "artist": {
       "label": "Artista",
-      "placeholder": "p. ej. Daft Punk"
+      "placeholder": "Shakira"
     },
     "duration": {
       "label": "Duración en minutos",
-      "placeholder": "45"
+      "placeholder": "7"
     },
     "accuracy": {
       "label": "Precisión",
@@ -25,6 +25,11 @@
     "generate": "Generar preview",
     "export": "Exportar a Spotify",
     "exporting": "Exportando…"
+  },
+  "mode": {
+    "label": "Modo",
+    "playlistTimer": "Playlist Timer",
+    "timerMix": "Timer Mix"
   },
   "source": {
     "label": "Fuente",
@@ -42,6 +47,34 @@
       "recent": "Recientes primero",
       "random": "Aleatorio"
     }
+  },
+  "timerMix": {
+    "title": "Timer Mix",
+    "description": "Prepara una mezcla cronometrada en vivo que se reproduce en este navegador en vez de exportar una playlist.",
+    "source": "Fuente",
+    "spotifySearch": "Busqueda de Spotify",
+    "likedSongs": "Canciones que te gustan",
+    "myPlaylists": "Mis playlists",
+    "artist": "Artista",
+    "artistFilterOptional": "Filtro de artista (opcional)",
+    "duration": "Duracion en minutos",
+    "songCount": "Canciones",
+    "fadeSeconds": "Segundos de fade",
+    "selectionMode": "Modo de seleccion",
+    "random": "Aleatorio",
+    "recent": "Recientes primero",
+    "prepare": "Preparar mix",
+    "connectSpotify": "Conectar Spotify",
+    "connecting": "Conectando...",
+    "start": "Iniciar Timer Mix",
+    "stop": "Parar",
+    "requiresPremium": "Timer Mix requiere Spotify Premium y mantiene la reproduccion dentro de este navegador.",
+    "currentTrack": "Cancion actual",
+    "nextTrack": "Siguiente cancion",
+    "remaining": "Restante",
+    "blockDuration": "Duracion del bloque",
+    "sdkError": "Error del reproductor de Spotify:",
+    "authRequired": "Conecta Spotify para usar Timer Mix."
   },
   "preview": {
     "title": "Preview de la playlist",
@@ -87,7 +120,21 @@
       "PLAYLIST_NOT_FOUND": "No se ha encontrado esa playlist.",
       "PLAYLIST_ITEMS_FORBIDDEN": "Spotify rechazó el acceso a los items de esa playlist. Revisa los permisos e inténtalo de nuevo.",
       "LIKED_SONGS_LOAD_FAILED": "No se han podido cargar tus canciones favoritas de Spotify.",
-      "INVALID_SELECTION_MODE": "El modo de selección debe ser Recientes primero o Aleatorio."
+      "INVALID_SELECTION_MODE": "El modo de selección debe ser Recientes primero o Aleatorio.",
+      "NOT_ENOUGH_TRACKS": "No hay suficientes canciones validas para este Timer Mix.",
+      "SHORT_TRACK_WARNING": "Algunas canciones seleccionadas son mas cortas que su bloque y podrian terminar antes.",
+      "ARTIST_REQUIRED": "El artista es obligatorio.",
+      "SOURCE_TYPE_REQUIRED": "La fuente es obligatoria.",
+      "DURATION_REQUIRED": "La duracion debe estar entre 1 y 30 minutos.",
+      "SONG_COUNT_REQUIRED": "Las canciones deben estar entre 1 y 10.",
+      "INVALID_FADE_SECONDS": "El fade debe estar entre 0 y 15 segundos.",
+      "SPOTIFY_SDK_CONNECT_FAILED": "No se pudo conectar el reproductor de Spotify.",
+      "SPOTIFY_SDK_LOAD_FAILED": "No se pudo cargar el reproductor de Spotify.",
+      "SPOTIFY_SDK_NOT_READY": "El reproductor de Spotify aun no esta listo.",
+      "TIMER_MIX_PLAY_FAILED": "Spotify rechazo iniciar la reproduccion en este dispositivo.",
+      "TIMER_MIX_VOLUME_FAILED": "Spotify rechazo un cambio de volumen.",
+      "TIMER_MIX_PAUSE_FAILED": "Spotify rechazo pausar la reproduccion.",
+      "TIMER_MIX_PLAYBACK_FAILED": "La reproduccion de Timer Mix fallo."
     }
   },
   "ads": {

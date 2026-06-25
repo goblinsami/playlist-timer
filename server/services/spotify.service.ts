@@ -10,6 +10,7 @@ const PERSONAL_SOURCE_MAX_ITEMS = 100
 type SpotifyErrorCode =
   | 'ARTIST_NOT_FOUND'
   | 'LIKED_SONGS_LOAD_FAILED'
+  | 'NOT_ENOUGH_TRACKS'
   | 'NO_TRACKS_FOUND'
   | 'NO_TRACKS_FOUND_FOR_FILTER'
   | 'PLAYLIST_ITEMS_FORBIDDEN'
@@ -138,6 +139,9 @@ export const SPOTIFY_EXPORT_SCOPES = [
   'playlist-read-private',
   'playlist-read-collaborative',
   'user-library-read',
+  'streaming',
+  'user-read-playback-state',
+  'user-modify-playback-state',
 ]
 
 export class SpotifyServiceError extends Error {
