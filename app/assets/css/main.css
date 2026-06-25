@@ -98,6 +98,17 @@ select {
   text-transform: uppercase;
 }
 
+.app-home-link {
+  color: inherit;
+  text-decoration: none;
+}
+
+.app-home-link:focus-visible {
+  border-radius: 6px;
+  outline: 3px solid rgb(29 185 84 / 24%);
+  outline-offset: 4px;
+}
+
 h1 {
   margin: 0;
   font-size: clamp(2.25rem, 8vw, 3.5rem);
@@ -116,6 +127,22 @@ h1 {
 .playlist-form {
   display: grid;
   gap: 20px;
+}
+
+.mode-switcher {
+  margin-bottom: 20px;
+}
+
+.section-title {
+  margin: 0 0 6px;
+  color: #2b3730;
+  font-size: 1.05rem;
+}
+
+.form-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 12px;
 }
 
 .field {
@@ -264,6 +291,13 @@ button:disabled {
   font-size: 0.9rem;
 }
 
+.timer-mix-note {
+  margin: 0;
+  color: #657169;
+  font-size: 0.88rem;
+  line-height: 1.5;
+}
+
 .preview {
   margin-top: 28px;
   padding: 22px;
@@ -387,6 +421,44 @@ button:disabled {
   flex: 0 0 auto;
 }
 
+.timer-mix-now {
+  display: grid;
+  gap: 8px;
+  margin: 0 0 18px;
+}
+
+.timer-mix-now p {
+  display: flex;
+  gap: 10px;
+  justify-content: space-between;
+  padding: 10px 0;
+  border-top: 1px solid #e1e8e3;
+}
+
+.timer-mix-now strong {
+  color: #2b3730;
+}
+
+.timer-mix-now span {
+  color: #718078;
+  text-align: right;
+}
+
+.warning-list {
+  display: grid;
+  gap: 8px;
+  margin: 18px 0 0;
+  padding: 0;
+  color: #765b16;
+  list-style: none;
+}
+
+.button-row {
+  display: grid;
+  gap: 12px;
+  margin-top: 20px;
+}
+
 .app-card > .ad-slot--after-preview {
   margin-top: 24px;
 }
@@ -453,5 +525,13 @@ button:disabled {
 
   .preview-stats {
     grid-template-columns: 1fr;
+  }
+
+  .form-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .timer-mix-now p {
+    display: grid;
   }
 }

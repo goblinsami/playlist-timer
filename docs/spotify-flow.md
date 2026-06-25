@@ -18,13 +18,24 @@ Playlist preview and playlist export use separate Spotify authorization flows.
   are not always based on only the most recent saved songs or first playlist
   items.
 - Export uses Spotify OAuth because it writes a playlist to a user's account.
+- Timer Mix uses Spotify OAuth because the Web Playback SDK requires a Spotify
+  Connect device with a user token for a Spotify Premium account.
 - Login is requested when the user exports a preview or selects a personal
-  Spotify source.
+  Spotify source, and when Timer Mix needs a browser playback device.
+- Before leaving the app for Spotify OAuth, the current form state is stored in
+  browser session storage. When the user returns from OAuth/export, the form is
+  restored so the selected source, artist/filter, duration, playlist, and mode
+  remain visible.
+- Clicking the app name navigates back to `/`, clears URL parameters, and resets
+  the local form state.
 - OAuth requests `playlist-modify-private`, `playlist-modify-public`,
   `playlist-read-private`, `playlist-read-collaborative`, and
-  `user-library-read`.
+  `user-library-read`, `streaming`, `user-read-playback-state`, and
+  `user-modify-playback-state`.
 - The callback stores the Spotify access token in a short-lived httpOnly cookie
   for local MVP export.
+- `GET /api/spotify/token` returns only the current user access token for the
+  Web Playback SDK. It never exposes the Spotify client secret.
 - Export loads the stored preview, creates a playlist with `POST /me/playlists`,
   and adds only real Spotify track URIs with
   `POST /v1/playlists/{playlist_id}/items`.
@@ -36,8 +47,23 @@ Playlist preview and playlist export use separate Spotify authorization flows.
   `SPOTIFY_ADD_TRACKS_FORBIDDEN`.
 - If OAuth scopes change, clear local cookies or re-authorize the app so Spotify
   returns a fresh token with the new permissions.
-- After adding the personal source scopes, revoke app access or clear local
-  cookies and re-authorize the app.
+- After adding personal source or Timer Mix playback scopes, revoke app access
+  or clear local cookies and re-authorize the app.
+
+## Timer Mix playback
+
+Timer Mix is an experimental live mode, not an exportable playlist.
+
+- Preparation uses `POST /api/timer-mix/prepare` to collect tracks from Spotify
+  Search, Liked Songs, or My Playlists and divide the target duration into equal
+  blocks.
+- Browser playback uses the Spotify Web Playback SDK loaded from
+  `https://sdk.scdn.co/spotify-player.js`.
+- Playback starts tracks with `PUT /v1/me/player/play?device_id=...`, sets
+  volume with `PUT /v1/me/player/volume`, and pauses at the end with
+  `PUT /v1/me/player/pause`.
+- Fade is simulated by volume steps. Spotify does not provide two simultaneous
+  Web Playback SDK decks, so Timer Mix does not implement overlapping crossfade.
 
 ## Local OAuth setup
 
