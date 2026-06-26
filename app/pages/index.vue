@@ -4,23 +4,39 @@ const quickStarts = [
     title: 'Fast Shower with Chayanne',
     description: '5 minutes, 3 songs',
     href: '/timer-mix?source=spotify-search&artist=Chayanne&duration=5&songs=3&fade=4',
+    analyticsName: 'fast_shower',
   },
   {
     title: '10-Minute Pasta with Elvis',
     description: '10 minutes, 4 songs',
     href: '/timer-mix?source=spotify-search&artist=Elvis%20Presley&duration=10&songs=4&fade=5',
+    analyticsName: 'ten_minute_pasta',
   },
   {
     title: 'Coffee Break with Dua Lipa',
     description: '7 minutes, 3 songs',
     href: '/timer-mix?source=spotify-search&artist=Dua%20Lipa&duration=7&songs=3&fade=4',
+    analyticsName: 'coffee_break',
   },
   {
     title: 'Focus Sprint with Hans Zimmer',
     description: '15 minutes, 5 songs',
     href: '/timer-mix?source=spotify-search&artist=Hans%20Zimmer&duration=15&songs=5&fade=6',
+    analyticsName: 'focus_sprint',
   },
 ]
+
+function trackLandingTimerMixClick(): void {
+  trackEvent('landing_cta_timer_mix_click')
+}
+
+function trackLandingPlaylistTimerClick(): void {
+  trackEvent('landing_cta_playlist_timer_click')
+}
+
+function trackQuickStartClick(presetName: string): void {
+  trackEvent('quick_start_click', { preset_name: presetName })
+}
 
 usePageSeo({
   title: 'MashupTimer - Turn Spotify into a music timer',
@@ -44,10 +60,10 @@ usePageSeo({
             Live Timer Mix requires Spotify Premium. Playlist Timer works as a saveable playlist mode.
           </p>
           <div class="link-actions">
-            <NuxtLink class="text-button" to="/timer-mix">
+            <NuxtLink class="text-button" to="/timer-mix" @click="trackLandingTimerMixClick">
               Start a Timer Mix
             </NuxtLink>
-            <NuxtLink class="text-button text-button--secondary" to="/playlist-timer">
+            <NuxtLink class="text-button text-button--secondary" to="/playlist-timer" @click="trackLandingPlaylistTimerClick">
               Create a timed playlist
             </NuxtLink>
           </div>
@@ -80,12 +96,12 @@ usePageSeo({
               <span class="feature-badge">Spotify Premium required</span>
               <h3>Live Timer Mix</h3>
               <p>A live Spotify mini-mix that plays inside your browser. Great for showers, breaks and quick routines.</p>
-              <NuxtLink to="/timer-mix">Start a Timer Mix</NuxtLink>
+              <NuxtLink to="/timer-mix" @click="trackLandingTimerMixClick">Start a Timer Mix</NuxtLink>
             </article>
             <article class="content-card">
               <h3>Playlist Timer</h3>
               <p>Create an exportable Spotify playlist made of full songs that fits your target duration.</p>
-              <NuxtLink to="/playlist-timer">Create a timed playlist</NuxtLink>
+              <NuxtLink to="/playlist-timer" @click="trackLandingPlaylistTimerClick">Create a timed playlist</NuxtLink>
             </article>
           </div>
         </section>
@@ -97,7 +113,7 @@ usePageSeo({
             <article v-for="quickStart in quickStarts" :key="quickStart.href" class="content-card">
               <h3>{{ quickStart.title }}</h3>
               <p>{{ quickStart.description }}</p>
-              <NuxtLink :to="quickStart.href">Use preset</NuxtLink>
+              <NuxtLink :to="quickStart.href" @click="trackQuickStartClick(quickStart.analyticsName)">Use preset</NuxtLink>
             </article>
           </div>
         </section>

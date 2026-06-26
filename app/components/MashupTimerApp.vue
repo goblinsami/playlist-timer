@@ -152,6 +152,12 @@ const timerMixQuickStarts: TimerMixQuickStartPreset[] = [
     fadeSeconds: 6,
   },
 ]
+const quickStartAnalyticsNames: Record<TimerMixQuickStartId, string> = {
+  fastShower: 'fast_shower',
+  pasta: 'ten_minute_pasta',
+  coffee: 'coffee_break',
+  focus: 'focus_sprint',
+}
 const FORM_STATE_STORAGE_KEY = 'playlist-timer-form-state'
 const { t, locale, setLocale } = useI18n()
 const route = useRoute()
@@ -203,6 +209,7 @@ const timerMixPlaybackInput = computed(() => ({
 const timerMixPlayback = useTimerMix(timerMixPlaybackInput)
 const runtimeConfig = useRuntimeConfig()
 const appName = runtimeConfig.public.appName
+const hasTrackedSpotifySdkReady = ref(false)
 
 onMounted(async () => {
   const previewId = getQueryString(route.query.previewId)
@@ -272,6 +279,7 @@ async function generatePreview(): Promise<void> {
 
   isLoading.value = true
   errorMessage.value = ''
+  trackEvent('playlist_preview_generate')
 
   try {
     preview.value = await $fetch<PreviewResponse>('/api/preview', {
@@ -380,6 +388,7 @@ function startSpotifyLogin(): void {
 
   exportErrorMessage.value = ''
   isExporting.value = true
+  trackEvent('playlist_export_click')
   saveFormState()
   window.location.href = `/api/spotify/login?previewId=${encodeURIComponent(previewId)}`
 }
@@ -389,6 +398,10 @@ function connectSpotifyForSource(): void {
     return
   }
 
+  trackEvent('spotify_connect_click', {
+    mode: appMode.value,
+    source_type: sourceType.value,
+  })
   saveFormState()
   window.location.href = `/api/spotify/login?sourceType=${encodeURIComponent(sourceType.value)}`
 }
@@ -495,10 +508,15 @@ function clearStoredFormState(): void {
 
 async function prepareTimerMix(): Promise<void> {
   const requestedSourceType = sourceType.value
+  const requestedDurationMinutes = durationMinutes.value
+  const requestedSongCount = songCount.value
 
   isPreparingMix.value = true
   timerMixErrorMessage.value = ''
   timerMix.value = null
+  trackEvent('timer_mix_prepare_click', {
+    source_type: requestedSourceType,
+  })
 
   try {
     timerMix.value = await $fetch<TimerMixResponse>('/api/timer-mix/prepare', {
@@ -512,13 +530,19 @@ async function prepareTimerMix(): Promise<void> {
           ? { playlistId: selectedPlaylistId.value }
           : {}),
         selectionMode: selectionMode.value,
-        durationMinutes: durationMinutes.value,
-        songCount: songCount.value,
+        durationMinutes: requestedDurationMinutes,
+        songCount: requestedSongCount,
         fadeSeconds: fadeSeconds.value,
       },
     })
+    trackEvent('timer_mix_prepare_success', {
+      source_type: requestedSourceType,
+      song_count: timerMix.value.songCount,
+      duration_minutes: requestedDurationMinutes,
+    })
   }
   catch (error: unknown) {
+    trackTimerMixError(error)
     timerMixErrorMessage.value = getErrorMessage(error)
   }
   finally {
@@ -528,6 +552,10 @@ async function prepareTimerMix(): Promise<void> {
 
 async function connectSpotifyPlayer(): Promise<void> {
   timerMixErrorMessage.value = ''
+  trackEvent('spotify_connect_click', {
+    mode: 'timer-mix',
+    source_type: sourceType.value,
+  })
 
   if (!hasTimerMixPlaybackAuth.value) {
     connectSpotifyForTimerMix()
@@ -538,6 +566,10 @@ async function connectSpotifyPlayer(): Promise<void> {
 }
 
 async function startTimerMix(): Promise<void> {
+  const requestedSourceType = sourceType.value
+  const requestedDurationMinutes = durationMinutes.value
+  const requestedSongCount = songCount.value
+
   timerMixErrorMessage.value = ''
 
   if (!hasTimerMixPlaybackAuth.value) {
@@ -550,11 +582,26 @@ async function startTimerMix(): Promise<void> {
 
     timerMixAccessToken.value = token.accessToken
     await nextTick()
+    trackEvent('timer_mix_start', {
+      source_type: requestedSourceType,
+      song_count: requestedSongCount,
+      duration_minutes: requestedDurationMinutes,
+    })
     await timerMixPlayback.startMix()
+
+    if (!timerMixPlayback.error.value && timerMixPlayback.remainingMs.value === 0) {
+      trackEvent('timer_mix_completed')
+    }
   }
   catch (error: unknown) {
+    trackTimerMixError(error)
     timerMixErrorMessage.value = getErrorMessage(error)
   }
+}
+
+async function stopTimerMix(): Promise<void> {
+  trackEvent('timer_mix_stop')
+  await timerMixPlayback.stopMix()
 }
 
 async function exportPreviewToSpotify(): Promise<void> {
@@ -575,6 +622,7 @@ async function exportPreviewToSpotify(): Promise<void> {
     })
 
     spotifyPlaylistUrl.value = result.spotifyUrl
+    trackEvent('playlist_export_success')
   }
   catch (error: unknown) {
     exportErrorMessage.value = getErrorMessage(error)
@@ -598,6 +646,32 @@ function getErrorMessage(error: unknown): string {
   }
 
   return t('errors.previewFailed')
+}
+
+function getErrorCode(error: unknown): string {
+  if (
+    typeof error === 'object'
+    && error !== null
+    && 'data' in error
+    && typeof error.data === 'object'
+    && error.data !== null
+    && 'statusMessage' in error.data
+    && typeof error.data.statusMessage === 'string'
+  ) {
+    return sanitizeErrorCode(error.data.statusMessage)
+  }
+
+  return error instanceof Error ? sanitizeErrorCode(error.message) : 'UNKNOWN_ERROR'
+}
+
+function trackTimerMixError(error: unknown): void {
+  trackEvent('timer_mix_error', {
+    error_code: getErrorCode(error),
+  })
+}
+
+function sanitizeErrorCode(errorCode: string): string {
+  return /^[A-Za-z0-9_]+$/.test(errorCode) ? errorCode : 'UNKNOWN_ERROR'
 }
 
 function getStatusMessage(statusMessage: string): string {
@@ -702,6 +776,9 @@ function applyTimerMixQuickStart(preset: TimerMixQuickStartPreset): void {
   timerMixErrorMessage.value = ''
   errorMessage.value = ''
   quickStartMessage.value = t('quickStarts.applied')
+  trackEvent('quick_start_click', {
+    preset_name: quickStartAnalyticsNames[preset.id],
+  })
 
   if (timerMixPlayback.isPlaying.value) {
     void timerMixPlayback.stopMix()
@@ -836,6 +913,31 @@ const sourceConnectLabel = computed(() =>
     ? t('source.connectForLikedSongs')
     : t('source.connectForPlaylists'),
 )
+
+watch(spotifyPlayer.isReady, (isReady) => {
+  if (!isReady || hasTrackedSpotifySdkReady.value) {
+    return
+  }
+
+  hasTrackedSpotifySdkReady.value = true
+  trackEvent('spotify_sdk_ready')
+})
+
+watch(spotifyPlayer.error, (error) => {
+  if (!error || isIgnorableReadyPlayerError(error)) {
+    return
+  }
+
+  trackTimerMixError(new Error(error))
+})
+
+watch(timerMixPlayback.error, (error) => {
+  if (!error) {
+    return
+  }
+
+  trackTimerMixError(new Error(error))
+})
 </script>
 
 <template>
@@ -1488,7 +1590,7 @@ const sourceConnectLabel = computed(() =>
                   <button
                     v-else
                     type="button"
-                    @click="timerMixPlayback.stopMix"
+                    @click="stopTimerMix"
                   >
                     {{ t('timerMix.stop') }}
                   </button>

@@ -6,6 +6,7 @@ const presets = [
     duration: '5 min',
     songs: '3 songs',
     href: '/timer-mix?source=spotify-search&artist=Chayanne&duration=5&songs=3&fade=4',
+    analyticsName: 'fast_shower',
   },
   {
     title: '10-Minute Pasta with Elvis',
@@ -13,6 +14,7 @@ const presets = [
     duration: '10 min',
     songs: '4 songs',
     href: '/timer-mix?source=spotify-search&artist=Elvis%20Presley&duration=10&songs=4&fade=5',
+    analyticsName: 'ten_minute_pasta',
   },
   {
     title: 'Coffee Break with Dua Lipa',
@@ -20,6 +22,7 @@ const presets = [
     duration: '7 min',
     songs: '3 songs',
     href: '/timer-mix?source=spotify-search&artist=Dua%20Lipa&duration=7&songs=3&fade=4',
+    analyticsName: 'coffee_break',
   },
   {
     title: 'Focus Sprint with Hans Zimmer',
@@ -27,8 +30,13 @@ const presets = [
     duration: '15 min',
     songs: '5 songs',
     href: '/timer-mix?source=spotify-search&artist=Hans%20Zimmer&duration=15&songs=5&fade=6',
+    analyticsName: 'focus_sprint',
   },
 ]
+
+function trackQuickStartClick(presetName: string): void {
+  trackEvent('quick_start_click', { preset_name: presetName })
+}
 
 usePageSeo({
   title: 'Quick Starts - MashupTimer',
@@ -61,7 +69,7 @@ usePageSeo({
                 <dd>{{ preset.songs }}</dd>
               </div>
             </dl>
-            <NuxtLink :to="preset.href">Use preset</NuxtLink>
+            <NuxtLink :to="preset.href" @click="trackQuickStartClick(preset.analyticsName)">Use preset</NuxtLink>
           </article>
         </div>
 

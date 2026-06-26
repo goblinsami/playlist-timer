@@ -64,6 +64,8 @@ export default defineNuxtConfig({
       adsenseSlotAfterPreview: process.env.NUXT_PUBLIC_ADSENSE_SLOT_AFTER_PREVIEW || '',
       adsenseSlotBottom: process.env.NUXT_PUBLIC_ADSENSE_SLOT_BOTTOM || '',
       adsenseSlotSidebar: process.env.NUXT_PUBLIC_ADSENSE_SLOT_SIDEBAR || '',
+      analyticsEnabled: process.env.NUXT_PUBLIC_ANALYTICS_ENABLED || 'false',
+      gaMeasurementId: process.env.NUXT_PUBLIC_GA_MEASUREMENT_ID || '',
     },
   },
   typescript: {
