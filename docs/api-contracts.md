@@ -189,3 +189,9 @@ Validation limits are 1-30 minutes, 1-10 songs, and 0-15 fade seconds.
 `selectionMode` can be `random` or `recent`. Liked Songs and My Playlists
 require OAuth. Optional artist filters are case-insensitive and match any artist
 name on the track.
+
+Playback is handled in the browser through the Spotify Web Playback SDK. The
+Timer Mix player queues the next Spotify URI as soon as the current track starts,
+uses Spotify skip-to-next for transitions when possible, and keeps the existing
+direct play command as fallback. It does not preload, cache, or overlap Spotify
+audio.

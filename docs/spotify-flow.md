@@ -59,11 +59,18 @@ Timer Mix is an experimental live mode, not an exportable playlist.
   blocks.
 - Browser playback uses the Spotify Web Playback SDK loaded from
   `https://sdk.scdn.co/spotify-player.js`.
-- Playback starts tracks with `PUT /v1/me/player/play?device_id=...`, sets
-  volume with `PUT /v1/me/player/volume`, and pauses at the end with
+- Playback starts the first track with
+  `PUT /v1/me/player/play?device_id=...`, queues the next item early with
+  `POST /v1/me/player/queue?uri=...&device_id=...`, advances during
+  transitions with `POST /v1/me/player/next?device_id=...`, sets volume with
+  `PUT /v1/me/player/volume`, and pauses at the end with
   `PUT /v1/me/player/pause`.
-- Fade is simulated by volume steps. Spotify does not provide two simultaneous
-  Web Playback SDK decks, so Timer Mix does not implement overlapping crossfade.
+- If queueing or skip-to-next fails, Timer Mix falls back to the direct play
+  command for the expected next track using
+  `PUT /v1/me/player/play?device_id=...`.
+- Fade is simulated by short volume steps. Spotify does not provide real audio
+  preloading, local buffering, or two simultaneous Web Playback SDK decks, so
+  Timer Mix does not implement overlapping crossfade.
 
 ## Local OAuth setup
 
