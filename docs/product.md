@@ -1,20 +1,28 @@
-# Product
+# Mashup Timer product
 
-## V1 scope
+Mashup Timer turns Spotify into a music timer. It helps people make a short music
+session for a shower, workout, break, cooking task, focus session, or any other
+fixed-length activity.
 
-Playlist Timer will let a user choose an artist, a target duration, and an
-accuracy tolerance. It will generate a playlist preview and later allow the
-user to export that playlist to Spotify.
+## Primary mode: Live Timer Mix
 
-## User flow
+Live Timer Mix is the primary experience. Choose a duration, how many songs to
+play, and a source: Spotify Search, Liked Songs, or one of your playlists.
+Mashup Timer plays a live mini-mix in the browser and stops when the timer ends.
 
-1. Enter an artist.
-2. Enter a target duration in minutes.
-3. Choose an accuracy tolerance.
-4. Generate and review a playlist preview.
-5. Connect to Spotify only when choosing to export.
+This mode uses the Spotify Web Playback SDK and requires Spotify Premium,
+because browser playback is available only to Premium accounts. It is
+experimental and live-only: it does not create an exportable audio file or a
+permanent mashup.
 
-## No-goals
+## Secondary mode: Playlist Timer
 
-V1 does not include accounts, saved playlist history, payments, ads, social
-features, or support for music services other than Spotify.
+Playlist Timer is the stable fallback. It selects full songs that add up as
+closely as possible to a target duration, then lets the user export the result
+as a Spotify playlist. Use it when the result needs to be saved or shared in
+Spotify.
+
+## Scope
+
+Mashup Timer does not create accounts, saved playlist history, payments, social
+features, or integrations with music services other than Spotify.

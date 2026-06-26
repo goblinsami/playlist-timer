@@ -7,6 +7,7 @@ const SPOTIFY_SDK_URL = 'https://sdk.scdn.co/spotify-player.js'
 let sdkLoadPromise: Promise<void> | null = null
 
 export function useSpotifyPlayer() {
+  const appName = useRuntimeConfig().public.appName
   const player = shallowRef<Spotify.Player | null>(null)
   const deviceId = ref('')
   const isReady = ref(false)
@@ -25,7 +26,7 @@ export function useSpotifyPlayer() {
       await loadSpotifySdk()
 
       if (!player.value) {
-        player.value = createPlayer({
+        player.value = createPlayer(appName, {
           onReady: (playerDeviceId) => {
             deviceId.value = playerDeviceId
             isReady.value = true
@@ -74,7 +75,7 @@ export function useSpotifyPlayer() {
   }
 }
 
-function createPlayer(callbacks: {
+function createPlayer(appName: string, callbacks: {
   onReady: (deviceId: string) => void
   onNotReady: () => void
   onError: (message: string) => void
@@ -84,7 +85,7 @@ function createPlayer(callbacks: {
   }
 
   const player = new window.Spotify.Player({
-    name: 'Playlist Timer Mix',
+    name: `${appName} Mix`,
     getOAuthToken: async (callback) => {
       const response = await fetch('/api/spotify/token')
 
@@ -105,7 +106,7 @@ function createPlayer(callbacks: {
   player.addListener('not_ready', () => callbacks.onNotReady())
   player.addListener('initialization_error', ({ message }) => callbacks.onError(message))
   player.addListener('authentication_error', ({ message }) => callbacks.onError(message))
-  player.addListener('account_error', ({ message }) => callbacks.onError(message))
+  player.addListener('account_error', () => callbacks.onError('PREMIUM_REQUIRED'))
   player.addListener('playback_error', ({ message }) => callbacks.onError(message))
   player.addListener('player_state_changed', () => {})
 

@@ -1,41 +1,35 @@
 # SEO
 
-Playlist Timer uses a minimal MVP SEO setup. This is not the programmatic SEO
-phase yet.
+Mashup Timer is positioned as a way to turn Spotify into a music timer. The primary
+message is live Spotify mini-mixes by duration; exportable timed playlists are
+the secondary value proposition.
 
 ## Current setup
 
 - The homepage defines title, description, Open Graph, and Twitter metadata with
   Nuxt `useSeoMeta`.
-- SEO metadata comes from the i18n locale files so English, Spanish, and Catalan
-  copy can change with the active locale.
-- The canonical URL uses the public runtime config value `siteUrl`.
-- The document `html` lang attribute follows the active locale.
+- Metadata comes from the English, Spanish, and Catalan locale files.
+- The public app name comes from `NUXT_PUBLIC_APP_NAME` and defaults to
+  `Mashup Timer`.
+- The canonical URL uses `NUXT_PUBLIC_SITE_URL`.
+- The document `html` language follows the active locale.
 - `robots.txt` allows crawling and points to `sitemap.xml`.
-- `sitemap.xml` currently lists only the homepage because the i18n routing
-  strategy does not generate localized URL prefixes.
+
+Live Timer Mix requires Spotify Premium because it uses browser playback through
+the Spotify Web Playback SDK. It plays music live in the browser and does not
+produce an exported mashup or audio file. Playlist Timer remains available for
+exportable Spotify playlists.
 
 ## Environment
 
-Set `NUXT_PUBLIC_SITE_URL` to the public deployed origin:
-
 ```env
+NUXT_PUBLIC_APP_NAME=Mashup Timer
 NUXT_PUBLIC_SITE_URL=https://example.com
 ```
 
-For local development, the default is:
-
-```env
-NUXT_PUBLIC_SITE_URL=http://127.0.0.1:3000
-```
+For local development, the default site URL is `http://127.0.0.1:3000`.
 
 ## OG image
 
 Metadata points to `/og-image.png` as a placeholder. Replace it with a real
 social preview image before production launch.
-
-## Future ideas
-
-- Add real localized route strategy if the product needs language-specific URLs.
-- Add hreflang and richer sitemap entries when localized URLs exist.
-- Add programmatic artist or duration pages only in a future SEO-specific phase.

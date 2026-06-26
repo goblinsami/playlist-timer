@@ -4,6 +4,11 @@ export default defineNuxtConfig({
   modules: ['@nuxtjs/i18n'],
   srcDir: 'app/',
   serverDir: 'server',
+  app: {
+    head: {
+      link: [{ rel: 'icon', type: 'image/x-icon', href: '/favicon.ico' }],
+    },
+  },
   css: ['~/assets/css/main.css'],
   i18n: {
     defaultLocale: 'en',
@@ -34,6 +39,7 @@ export default defineNuxtConfig({
     spotifyRedirectUri: '',
     spotifyExportPlaylistPublic: 'false',
     public: {
+      appName: process.env.NUXT_PUBLIC_APP_NAME || 'Mashup Timer',
       siteUrl: process.env.NUXT_PUBLIC_SITE_URL || 'http://127.0.0.1:3000',
     },
   },

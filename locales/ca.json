@@ -1,11 +1,13 @@
 {
   "app": {
-    "name": "Playlist Timer"
+    "name": "Mashup Timer"
   },
   "hero": {
     "eyebrow": "El teu temps, la teva banda sonora",
-    "title": "Crea playlists de Spotify per durada",
-    "subtitle": "Tria un artista, una durada i genera una playlist que acabi just quan la necessites."
+    "title": "Converteix Spotify en un temporitzador musical",
+    "subtitle": "Crea mini-mescles en directe o playlists per durada per a dutxes, entrenaments, pauses, cuina, concentració i molt més.",
+    "primaryCta": "Inicia un Timer Mix",
+    "secondaryCta": "Crea una playlist per durada"
   },
   "form": {
     "artist": {
@@ -29,7 +31,7 @@
   "mode": {
     "label": "Mode",
     "playlistTimer": "Playlist Timer",
-    "timerMix": "Timer Mix"
+    "timerMix": "Timer Mix en directe"
   },
   "source": {
     "label": "Font",
@@ -40,6 +42,8 @@
     "connectForPlaylists": "Connecta Spotify per carregar les teves playlists",
     "selectPlaylist": "Selecciona una playlist",
     "artistFilterOptional": "Filtre d'artista (opcional)",
+    "random": "Selecció aleatòria",
+    "recent": "Recents primer",
     "loadingPlaylists": "Carregant playlists…",
     "noPlaylistsFound": "No s'han trobat playlists.",
     "selectionMode": {
@@ -49,8 +53,10 @@
     }
   },
   "timerMix": {
-    "title": "Timer Mix",
-    "description": "Prepara una mescla cronometrada en directe que es reprodueix en aquest navegador en comptes d exportar una playlist.",
+    "title": "Timer Mix en directe",
+    "description": "Tria una durada, quantes cançons vols i {appName} reproduirà una mini-mescla de Spotify en directe que s'atura quan acaba el temporitzador.",
+    "helper": "Funciona amb la cerca de Spotify, les cançons que t'agraden i les teves playlists.",
+    "experimental": "Experimental",
     "source": "Font",
     "spotifySearch": "Cerca de Spotify",
     "likedSongs": "Cancons que t agraden",
@@ -68,13 +74,19 @@
     "connecting": "Connectant...",
     "start": "Inicia Timer Mix",
     "stop": "Atura",
-    "requiresPremium": "Timer Mix requereix Spotify Premium i mante la reproduccio dins d aquest navegador.",
+    "requiresPremium": "Timer Mix requereix Spotify Premium perquè Spotify només permet la reproducció al navegador per a comptes Premium.",
+    "limitation": "Timer Mix es reprodueix en directe en aquest navegador. No crea un fitxer d'àudio exportable ni un mashup permanent.",
     "currentTrack": "Canco actual",
     "nextTrack": "Canco seguent",
     "remaining": "Restant",
     "blockDuration": "Durada del bloc",
     "sdkError": "Error del reproductor de Spotify:",
     "authRequired": "Connecta Spotify per usar Timer Mix."
+  },
+  "playlistTimer": {
+    "title": "Playlist Timer",
+    "description": "Crea una playlist de Spotify amb cançons completes que s'ajusta tant com pot a la teva durada objectiu.",
+    "helper": "Ideal si vols desar o exportar el resultat a Spotify."
   },
   "preview": {
     "title": "Previsualització de la playlist",
@@ -101,7 +113,12 @@
     "previewFailed": "No s'ha pogut generar la previsualització. Torna-ho a provar.",
     "exportFailed": "No s'ha pogut exportar a Spotify. Torna-ho a provar.",
     "missingPreview": "Falta la previsualització. Genera'n una abans d'exportar.",
-    "noTracksFoundForFilter": "Cap cançó coincideix amb aquest filtre d'artista.",
+    "spotifyAuthRequired": "Connecta Spotify per usar aquest mode.",
+    "premiumRequired": "Timer Mix necessita Spotify Premium per reproduir música en aquest navegador. Encara pots usar Playlist Timer.",
+    "noTracksFound": "No s'han trobat cançons reproduïbles. Prova amb un altre artista, playlist o font.",
+    "noTracksFoundForFilter": "Cap cançó coincideix amb aquest filtre d'artista. Prova de treure'l o tria una altra font.",
+    "notEnoughTracks": "No hi ha prou cançons per a aquest mix. Prova amb menys cançons o una font més àmplia.",
+    "sdkDeviceNotReady": "El reproductor de Spotify encara s'està connectant. Torna-ho a provar d'aquí a un moment.",
     "playlistItemsForbidden": "Spotify ha rebutjat l'accés als items d'aquesta playlist. Revisa els permisos i torna-ho a provar.",
     "likedSongsLoadFailed": "No s'han pogut carregar les cançons que t'agraden de Spotify.",
     "playlistsLoadFailed": "No s'han pogut carregar les teves playlists de Spotify.",
@@ -109,19 +126,21 @@
     "spotifyAddItemsForbidden": "Spotify ha creat la playlist, però ha rebutjat afegir-hi cançons. La playlist buida s'ha eliminat si ha estat possible. Revisa els permisos de l'app de Spotify i torna-ho a provar.",
     "codes": {
       "SPOTIFY_ADD_TRACKS_FORBIDDEN": "Spotify ha creat la playlist, però ha rebutjat afegir-hi cançons. La playlist buida s'ha eliminat si ha estat possible. Revisa els permisos de l'app de Spotify i torna-ho a provar.",
-      "SPOTIFY_AUTH_REQUIRED": "Connecta Spotify per continuar.",
+      "SPOTIFY_AUTH_REQUIRED": "Connecta Spotify per usar aquest mode.",
+      "PREMIUM_REQUIRED": "Timer Mix necessita Spotify Premium per reproduir música en aquest navegador. Encara pots usar Playlist Timer.",
+      "account_error": "Timer Mix necessita Spotify Premium per reproduir música en aquest navegador. Encara pots usar Playlist Timer.",
       "SPOTIFY_AUTH_ERROR": "L'autorització de Spotify ha fallat. Torna-ho a provar.",
       "SPOTIFY_SCOPE_ERROR": "Spotify no ha concedit els permisos necessaris per a playlists. Esborra les cookies i autoritza de nou.",
       "PREVIEW_NOT_FOUND": "Aquesta previsualització ha caducat o no s'ha trobat.",
       "NO_EXPORTABLE_TRACKS": "Aquesta previsualització no té cançons de Spotify per exportar.",
-      "NO_TRACKS_FOUND": "No s'han trobat cançons vàlides de Spotify per a aquesta font.",
-      "NO_TRACKS_FOUND_FOR_FILTER": "Cap cançó coincideix amb aquest filtre d'artista.",
+      "NO_TRACKS_FOUND": "No s'han trobat cançons reproduïbles. Prova amb un altre artista, playlist o font.",
+      "NO_TRACKS_FOUND_FOR_FILTER": "Cap cançó coincideix amb aquest filtre d'artista. Prova de treure'l o tria una altra font.",
       "PLAYLISTS_LOAD_FAILED": "No s'han pogut carregar les teves playlists de Spotify.",
       "PLAYLIST_NOT_FOUND": "No s'ha trobat aquesta playlist.",
       "PLAYLIST_ITEMS_FORBIDDEN": "Spotify ha rebutjat l'accés als items d'aquesta playlist. Revisa els permisos i torna-ho a provar.",
       "LIKED_SONGS_LOAD_FAILED": "No s'han pogut carregar les cançons que t'agraden de Spotify.",
       "INVALID_SELECTION_MODE": "El mode de selecció ha de ser Recents primer o Aleatori.",
-      "NOT_ENOUGH_TRACKS": "No hi ha prou cancons valides per a aquest Timer Mix.",
+      "NOT_ENOUGH_TRACKS": "No hi ha prou cançons per a aquest mix. Prova amb menys cançons o una font més àmplia.",
       "SHORT_TRACK_WARNING": "Algunes cancons seleccionades son mes curtes que el seu bloc i podrien acabar abans.",
       "ARTIST_REQUIRED": "L artista es obligatori.",
       "SOURCE_TYPE_REQUIRED": "La font es obligatoria.",
@@ -130,7 +149,8 @@
       "INVALID_FADE_SECONDS": "El fade ha d estar entre 0 i 15 segons.",
       "SPOTIFY_SDK_CONNECT_FAILED": "No s ha pogut connectar el reproductor de Spotify.",
       "SPOTIFY_SDK_LOAD_FAILED": "No s ha pogut carregar el reproductor de Spotify.",
-      "SPOTIFY_SDK_NOT_READY": "El reproductor de Spotify encara no esta llest.",
+      "SPOTIFY_SDK_NOT_READY": "El reproductor de Spotify encara s'està connectant. Torna-ho a provar d'aquí a un moment.",
+      "SDK_DEVICE_NOT_READY": "El reproductor de Spotify encara s'està connectant. Torna-ho a provar d'aquí a un moment.",
       "TIMER_MIX_PLAY_FAILED": "Spotify ha rebutjat iniciar la reproduccio en aquest dispositiu.",
       "TIMER_MIX_VOLUME_FAILED": "Spotify ha rebutjat un canvi de volum.",
       "TIMER_MIX_PAUSE_FAILED": "Spotify ha rebutjat pausar la reproduccio.",
@@ -141,19 +161,19 @@
     "label": "Publicitat"
   },
   "seo": {
-    "title": "Crea playlists de Spotify per durada",
-    "description": "Playlist Timer generarà playlists segons l'artista, la durada objectiu i la precisió que triïs.",
+    "title": "Converteix Spotify en un temporitzador musical",
+    "description": "Crea mini-mescles en directe i playlists de Spotify per durada per a dutxes, entrenaments, pauses, cuina o sessions de concentració.",
     "meta": {
-      "title": "Playlist Timer — Crea playlists de Spotify per durada",
-      "description": "Crea playlists de Spotify amb una durada concreta. Tria un artista, una durada, ajusta la tolerància, previsualitza el resultat i exporta'l a Spotify."
+      "title": "{appName} — Converteix Spotify en un temporitzador musical",
+      "description": "Crea mini-mescles en directe i playlists de Spotify per durada per a dutxes, entrenaments, pauses, cuina o sessions de concentració."
     },
     "og": {
-      "title": "Playlist Timer — Crea playlists de Spotify per durada",
-      "description": "Crea playlists de Spotify amb una durada concreta. Tria un artista, una durada, ajusta la tolerància, previsualitza el resultat i exporta'l a Spotify."
+      "title": "{appName} — Mini-mescles de Spotify en directe per durada",
+      "description": "Converteix Spotify en un temporitzador. Crea mini-mescles en directe o playlists per durada des d'un artista, les cançons que t'agraden o les teves playlists."
     },
     "twitter": {
-      "title": "Playlist Timer — Crea playlists de Spotify per durada",
-      "description": "Crea playlists de Spotify amb una durada concreta. Tria un artista, una durada, ajusta la tolerància, previsualitza el resultat i exporta'l a Spotify."
+      "title": "{appName} — Converteix Spotify en un temporitzador musical",
+      "description": "Crea mini-mescles en directe i playlists de Spotify per durada."
     }
   },
   "language": {

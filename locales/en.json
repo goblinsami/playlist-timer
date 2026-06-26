@@ -1,11 +1,13 @@
 {
   "app": {
-    "name": "Playlist Timer"
+    "name": "Mashup Timer"
   },
   "hero": {
     "eyebrow": "Your time, your soundtrack",
-    "title": "Create Spotify playlists by duration",
-    "subtitle": "Pick an artist, choose a duration, and generate a playlist that ends when you need it to."
+    "title": "Turn Spotify into a music timer",
+    "subtitle": "Create live mini-mixes or timed playlists for showers, workouts, breaks, cooking, focus sessions and more.",
+    "primaryCta": "Start a Timer Mix",
+    "secondaryCta": "Create a timed playlist"
   },
   "form": {
     "artist": {
@@ -29,7 +31,7 @@
   "mode": {
     "label": "Mode",
     "playlistTimer": "Playlist Timer",
-    "timerMix": "Timer Mix"
+    "timerMix": "Live Timer Mix"
   },
   "source": {
     "label": "Source",
@@ -40,6 +42,8 @@
     "connectForPlaylists": "Connect Spotify to load playlists",
     "selectPlaylist": "Select playlist",
     "artistFilterOptional": "Artist filter (optional)",
+    "random": "Random selection",
+    "recent": "Recent first",
     "loadingPlaylists": "Loading playlists…",
     "noPlaylistsFound": "No playlists found.",
     "selectionMode": {
@@ -49,8 +53,10 @@
     }
   },
   "timerMix": {
-    "title": "Timer Mix",
-    "description": "Prepare a live timed mix that plays in this browser instead of exporting a playlist.",
+    "title": "Live Timer Mix",
+    "description": "Choose a duration, pick how many songs you want, and {appName} plays a live Spotify mini-mix that stops when your timer ends.",
+    "helper": "Works with Spotify Search, Liked Songs and your playlists.",
+    "experimental": "Experimental",
     "source": "Source",
     "spotifySearch": "Spotify Search",
     "likedSongs": "Liked Songs",
@@ -68,13 +74,19 @@
     "connecting": "Connecting...",
     "start": "Start Timer Mix",
     "stop": "Stop",
-    "requiresPremium": "Timer Mix requires Spotify Premium and keeps playback inside this browser.",
+    "requiresPremium": "Timer Mix requires Spotify Premium because Spotify only allows browser playback for Premium accounts.",
+    "limitation": "Timer Mix plays live in this browser. It does not create an exportable audio file or permanent mashup.",
     "currentTrack": "Current track",
     "nextTrack": "Next track",
     "remaining": "Remaining",
     "blockDuration": "Block duration",
     "sdkError": "Spotify player error:",
     "authRequired": "Connect Spotify to use Timer Mix."
+  },
+  "playlistTimer": {
+    "title": "Playlist Timer",
+    "description": "Create a Spotify playlist made of full songs that adds up as closely as possible to your target duration.",
+    "helper": "Best when you want to save or export the result to Spotify."
   },
   "preview": {
     "title": "Playlist preview",
@@ -101,7 +113,12 @@
     "previewFailed": "Unable to generate a preview. Please try again.",
     "exportFailed": "Unable to export to Spotify. Please try again.",
     "missingPreview": "Preview is missing. Generate a preview before exporting.",
-    "noTracksFoundForFilter": "No tracks matched that artist filter.",
+    "spotifyAuthRequired": "Connect Spotify to use this mode.",
+    "premiumRequired": "Timer Mix needs Spotify Premium to play music in this browser. You can still use Playlist Timer.",
+    "noTracksFound": "No playable tracks found. Try another artist, playlist or source.",
+    "noTracksFoundForFilter": "No tracks matched this artist filter. Try removing the filter or choosing another source.",
+    "notEnoughTracks": "Not enough tracks found for this mix. Try fewer songs or a broader source.",
+    "sdkDeviceNotReady": "Spotify player is still connecting. Try again in a moment.",
     "playlistItemsForbidden": "Spotify refused access to that playlist's items. Check playlist permissions and try again.",
     "likedSongsLoadFailed": "Unable to load your Liked Songs from Spotify.",
     "playlistsLoadFailed": "Unable to load your Spotify playlists.",
@@ -109,19 +126,21 @@
     "spotifyAddItemsForbidden": "Spotify created the playlist but refused adding items. The empty playlist was removed if possible. Please check Spotify app permissions and try again.",
     "codes": {
       "SPOTIFY_ADD_TRACKS_FORBIDDEN": "Spotify created the playlist but refused adding items. The empty playlist was removed if possible. Please check Spotify app permissions and try again.",
-      "SPOTIFY_AUTH_REQUIRED": "Please connect Spotify to continue.",
+      "SPOTIFY_AUTH_REQUIRED": "Connect Spotify to use this mode.",
+      "PREMIUM_REQUIRED": "Timer Mix needs Spotify Premium to play music in this browser. You can still use Playlist Timer.",
+      "account_error": "Timer Mix needs Spotify Premium to play music in this browser. You can still use Playlist Timer.",
       "SPOTIFY_AUTH_ERROR": "Spotify authorization failed. Please try again.",
       "SPOTIFY_SCOPE_ERROR": "Spotify did not grant the required playlist permissions. Clear cookies and authorize again.",
       "PREVIEW_NOT_FOUND": "This preview expired or could not be found.",
       "NO_EXPORTABLE_TRACKS": "This preview has no Spotify tracks to export.",
-      "NO_TRACKS_FOUND": "No usable Spotify tracks were found for this source.",
-      "NO_TRACKS_FOUND_FOR_FILTER": "No tracks matched that artist filter.",
+      "NO_TRACKS_FOUND": "No playable tracks found. Try another artist, playlist or source.",
+      "NO_TRACKS_FOUND_FOR_FILTER": "No tracks matched this artist filter. Try removing the filter or choosing another source.",
       "PLAYLISTS_LOAD_FAILED": "Unable to load your Spotify playlists.",
       "PLAYLIST_NOT_FOUND": "That playlist could not be found.",
       "PLAYLIST_ITEMS_FORBIDDEN": "Spotify refused access to that playlist's items. Check playlist permissions and try again.",
       "LIKED_SONGS_LOAD_FAILED": "Unable to load your Liked Songs from Spotify.",
       "INVALID_SELECTION_MODE": "Selection mode must be Recent first or Random.",
-      "NOT_ENOUGH_TRACKS": "Not enough valid tracks were found for this Timer Mix.",
+      "NOT_ENOUGH_TRACKS": "Not enough tracks found for this mix. Try fewer songs or a broader source.",
       "SHORT_TRACK_WARNING": "Some selected tracks are shorter than their time block and may end early.",
       "ARTIST_REQUIRED": "Artist is required.",
       "SOURCE_TYPE_REQUIRED": "Source is required.",
@@ -130,7 +149,8 @@
       "INVALID_FADE_SECONDS": "Fade must be between 0 and 15 seconds.",
       "SPOTIFY_SDK_CONNECT_FAILED": "The Spotify player could not connect.",
       "SPOTIFY_SDK_LOAD_FAILED": "The Spotify player could not load.",
-      "SPOTIFY_SDK_NOT_READY": "The Spotify player is not ready yet.",
+      "SPOTIFY_SDK_NOT_READY": "Spotify player is still connecting. Try again in a moment.",
+      "SDK_DEVICE_NOT_READY": "Spotify player is still connecting. Try again in a moment.",
       "TIMER_MIX_PLAY_FAILED": "Spotify refused to start playback on this device.",
       "TIMER_MIX_VOLUME_FAILED": "Spotify refused a volume change.",
       "TIMER_MIX_PAUSE_FAILED": "Spotify refused to pause playback.",
@@ -141,19 +161,19 @@
     "label": "Advertisement"
   },
   "seo": {
-    "title": "Create Spotify playlists by duration",
-    "description": "Playlist Timer will generate playlists based on your chosen artist, target duration, and preferred accuracy.",
+    "title": "Turn Spotify into a music timer",
+    "description": "Create live Spotify mini-mixes and timed playlists for showers, workouts, breaks, cooking and focus sessions.",
     "meta": {
-      "title": "Playlist Timer — Create Spotify playlists by duration",
-      "description": "Create Spotify playlists that match a target duration. Pick an artist, choose a time, set your accuracy, preview the result and export it to Spotify."
+      "title": "{appName} — Turn Spotify into a music timer",
+      "description": "Create live Spotify mini-mixes and timed playlists for showers, workouts, breaks, cooking and focus sessions. Pick a duration, choose your songs and start your timer."
     },
     "og": {
-      "title": "Playlist Timer — Create Spotify playlists by duration",
-      "description": "Create Spotify playlists that match a target duration. Pick an artist, choose a time, set your accuracy, preview the result and export it to Spotify."
+      "title": "{appName} — Live Spotify mini-mixes by duration",
+      "description": "Turn Spotify into a timer. Create live mini-mixes or timed playlists from an artist, your Liked Songs or your playlists."
     },
     "twitter": {
-      "title": "Playlist Timer — Create Spotify playlists by duration",
-      "description": "Create Spotify playlists that match a target duration. Pick an artist, choose a time, set your accuracy, preview the result and export it to Spotify."
+      "title": "{appName} — Turn Spotify into a music timer",
+      "description": "Create live Spotify mini-mixes and timed playlists by duration."
     }
   },
   "language": {

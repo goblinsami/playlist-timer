@@ -101,14 +101,14 @@ const toleranceByAccuracy: Record<Accuracy, number> = {
   flexible: 60,
 }
 
-const modeOptions: AppMode[] = ['playlist-timer', 'timer-mix']
+const modeOptions: AppMode[] = ['timer-mix', 'playlist-timer']
 const sourceOptions: SourceType[] = ['spotify-search', 'liked-songs', 'user-playlist']
 const selectionModeOptions: SelectionMode[] = ['recent', 'random']
 const FORM_STATE_STORAGE_KEY = 'playlist-timer-form-state'
 const { t, locale, setLocale } = useI18n()
 const route = useRoute()
 const router = useRouter()
-const appMode = ref<AppMode>('playlist-timer')
+const appMode = ref<AppMode>('timer-mix')
 const sourceType = ref<SourceType>('spotify-search')
 const selectionMode = ref<SelectionMode>('random')
 const artist = ref('')
@@ -152,19 +152,20 @@ const timerMixPlaybackInput = computed(() => ({
 }))
 const timerMixPlayback = useTimerMix(timerMixPlaybackInput)
 const runtimeConfig = useRuntimeConfig()
+const appName = runtimeConfig.public.appName
 const siteUrl = computed(() => normalizeSiteUrl(runtimeConfig.public.siteUrl))
 const ogImageUrl = computed(() => `${siteUrl.value}/og-image.png`)
 
 useSeoMeta({
-  title: () => t('seo.meta.title'),
-  description: () => t('seo.meta.description'),
-  ogTitle: () => t('seo.og.title'),
-  ogDescription: () => t('seo.og.description'),
+  title: () => t('seo.meta.title', { appName }),
+  description: () => t('seo.meta.description', { appName }),
+  ogTitle: () => t('seo.og.title', { appName }),
+  ogDescription: () => t('seo.og.description', { appName }),
   ogType: 'website',
   ogImage: () => ogImageUrl.value,
   twitterCard: 'summary_large_image',
-  twitterTitle: () => t('seo.twitter.title'),
-  twitterDescription: () => t('seo.twitter.description'),
+  twitterTitle: () => t('seo.twitter.title', { appName }),
+  twitterDescription: () => t('seo.twitter.description', { appName }),
   twitterImage: () => ogImageUrl.value,
 })
 
@@ -373,7 +374,7 @@ function connectSpotifyForTimerMix(): void {
 }
 
 function resetRootForm(): void {
-  appMode.value = 'playlist-timer'
+  appMode.value = 'timer-mix'
   sourceType.value = 'spotify-search'
   selectionMode.value = 'random'
   artist.value = ''
@@ -617,6 +618,12 @@ function isNullableNumber(value: unknown): value is number | null {
   return value === null || typeof value === 'number'
 }
 
+function selectMode(mode: AppMode): void {
+  appMode.value = mode
+  errorMessage.value = ''
+  timerMixErrorMessage.value = ''
+}
+
 function isIgnorableReadyPlayerError(message: string): boolean {
   return spotifyPlayer.isReady.value && message === 'Invalid token scopes.'
 }
@@ -631,13 +638,8 @@ function getSourceLabelKey(value: SourceType): string {
   return keys[value]
 }
 
-function getModeLabelKey(value: AppMode): string {
-  const keys: Record<AppMode, string> = {
-    'playlist-timer': 'mode.playlistTimer',
-    'timer-mix': 'mode.timerMix',
-  }
-
-  return keys[value]
+function getModeLabel(value: AppMode): string {
+  return value === 'timer-mix' ? t('mode.timerMix') : t('mode.playlistTimer')
 }
 
 function getTimerMixSourceLabelKey(value: SourceType): string {
@@ -763,7 +765,7 @@ const sourceConnectLabel = computed(() =>
             <header class="hero">
               <p class="eyebrow">
                 <NuxtLink class="app-home-link" to="/" @click="resetRootForm">
-                  {{ t('app.name') }}
+                  {{ appName }}
                 </NuxtLink>
               </p>
               <h1 id="page-title">
@@ -772,6 +774,14 @@ const sourceConnectLabel = computed(() =>
               <p class="subtitle">
                 {{ t('hero.subtitle') }}
               </p>
+              <div class="button-row hero-actions">
+                <button type="button" @click="selectMode('timer-mix')">
+                  {{ t('hero.primaryCta') }}
+                </button>
+                <button class="button--secondary" type="button" @click="selectMode('playlist-timer')">
+                  {{ t('hero.secondaryCta') }}
+                </button>
+              </div>
             </header>
 
             <div class="field mode-switcher">
@@ -787,7 +797,7 @@ const sourceConnectLabel = computed(() =>
                     :key="option"
                     :value="option"
                   >
-                    {{ t(getModeLabelKey(option)) }}
+                    {{ getModeLabel(option) }}
                   </option>
                 </select>
               </div>
@@ -798,6 +808,18 @@ const sourceConnectLabel = computed(() =>
               class="playlist-form"
               @submit.prevent="handleMainSubmit"
             >
+              <div>
+                <h2 class="section-title">
+                  {{ t('playlistTimer.title') }}
+                </h2>
+                <p class="field-hint">
+                  {{ t('playlistTimer.description') }}
+                </p>
+                <p class="field-hint">
+                  {{ t('playlistTimer.helper') }}
+                </p>
+              </div>
+
               <div class="field">
                 <label for="source">{{ t('source.label') }}</label>
                 <div class="select-wrapper">
@@ -939,9 +961,13 @@ const sourceConnectLabel = computed(() =>
               <div>
                 <h2 class="section-title">
                   {{ t('timerMix.title') }}
+                  <span class="feature-badge">{{ t('timerMix.experimental') }}</span>
                 </h2>
                 <p class="field-hint">
-                  {{ t('timerMix.description') }}
+                  {{ t('timerMix.description', { appName }) }}
+                </p>
+                <p class="field-hint">
+                  {{ t('timerMix.helper') }}
                 </p>
               </div>
 
@@ -1091,6 +1117,10 @@ const sourceConnectLabel = computed(() =>
 
               <p class="timer-mix-note">
                 {{ t('timerMix.requiresPremium') }}
+              </p>
+
+              <p class="timer-mix-note">
+                {{ t('timerMix.limitation') }}
               </p>
 
               <button type="submit" :disabled="isTimerMixPrepareDisabled">
@@ -1328,7 +1358,7 @@ const sourceConnectLabel = computed(() =>
               {{ t('seo.title') }}
             </h2>
             <p>
-              {{ t('seo.description') }}
+              {{ t('seo.description', { appName }) }}
             </p>
           </section>
 

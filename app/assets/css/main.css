@@ -130,11 +130,10 @@ h1 {
 }
 
 .mode-switcher {
-  margin-bottom: 20px;
+  margin-bottom: 32px;
 }
 
 .section-title {
-  margin: 0 0 6px;
   color: #2b3730;
   font-size: 1.05rem;
 }
@@ -296,6 +295,33 @@ button:disabled {
   color: #657169;
   font-size: 0.88rem;
   line-height: 1.5;
+}
+
+.hero-actions {
+  margin-top: 22px;
+}
+
+.button--secondary {
+  color: #16833c;
+  background: #e2f5e8;
+}
+
+.button--secondary:hover {
+  background: #ccefd7;
+}
+
+.feature-badge {
+  display: inline-block;
+  margin-left: 8px;
+  padding: 3px 7px;
+  border-radius: 999px;
+  color: #765b16;
+  background: #fff3c9;
+  font-size: 0.68rem;
+  font-weight: 800;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  vertical-align: middle;
 }
 
 .preview {

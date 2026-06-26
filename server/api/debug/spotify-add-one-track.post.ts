@@ -20,6 +20,7 @@ interface SpotifyAddTracksResponse {
 }
 
 export default defineEventHandler(async (event) => {
+  const appName = useRuntimeConfig(event).public.appName
   const accessToken = getCookie(event, SPOTIFY_ACCESS_TOKEN_COOKIE)
 
   if (!accessToken) {
@@ -30,7 +31,7 @@ export default defineEventHandler(async (event) => {
   }
 
   const user = await getCurrentUserForDebug(accessToken)
-  const playlist = await createPublicPlaylistForDebug(accessToken)
+  const playlist = await createPublicPlaylistForDebug(accessToken, appName)
   const addTracksResult = await addOneTrackForDebug(accessToken, playlist.id)
 
   console.info('[spotify-debug-add-one-track]', {
@@ -89,6 +90,7 @@ async function getCurrentUserForDebug(accessToken: string): Promise<SpotifyDebug
 
 async function createPublicPlaylistForDebug(
   accessToken: string,
+  appName: string,
 ): Promise<SpotifyDebugPlaylist> {
   const url = `${SPOTIFY_API_URL}/me/playlists`
   const response = await fetch(url, {
@@ -98,8 +100,8 @@ async function createPublicPlaylistForDebug(
       'Content-Type': 'application/json',
     },
     body: JSON.stringify({
-      name: 'Playlist Timer Debug Add Track',
-      description: 'Temporary debug playlist created by Playlist Timer.',
+      name: `${appName} Debug Add Track`,
+      description: `Temporary debug playlist created by ${appName}.`,
       public: true,
     }),
   })
