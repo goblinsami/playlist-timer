@@ -2,11 +2,42 @@
 type AdPosition = 'top' | 'after-preview' | 'bottom' | 'sidebar'
 
 const { t } = useI18n()
+const runtimeConfig = useRuntimeConfig()
 
-defineProps<{
+const props = defineProps<{
   position: AdPosition
   label?: string
 }>()
+
+const adsenseSlot = computed(() => {
+  const slots: Record<AdPosition, string> = {
+    top: '',
+    'after-preview': runtimeConfig.public.adsenseSlotAfterPreview,
+    bottom: runtimeConfig.public.adsenseSlotBottom,
+    sidebar: runtimeConfig.public.adsenseSlotSidebar,
+  }
+
+  return typeof slots[props.position] === 'string' ? slots[props.position] : ''
+})
+const adsenseClient = computed(() =>
+  typeof runtimeConfig.public.adsenseClient === 'string'
+    ? runtimeConfig.public.adsenseClient
+    : '',
+)
+const canRenderAds = computed(() =>
+  runtimeConfig.public.adsEnabled === 'true'
+  && Boolean(adsenseClient.value)
+  && Boolean(adsenseSlot.value),
+)
+
+onMounted(async () => {
+  if (!canRenderAds.value) {
+    return
+  }
+
+  await nextTick()
+  ;(window as Window & { adsbygoogle?: unknown[] }).adsbygoogle?.push({})
+})
 </script>
 
 <template>
@@ -15,8 +46,19 @@ defineProps<{
     :class="`ad-slot--${position}`"
     :aria-label="t('ads.label')"
   >
-    <span>{{ t('ads.label') }}</span>
-    <small v-if="label">{{ label }}</small>
+    <ins
+      v-if="canRenderAds"
+      class="adsbygoogle"
+      style="display: block;"
+      :data-ad-client="adsenseClient"
+      :data-ad-slot="adsenseSlot"
+      data-ad-format="auto"
+      data-full-width-responsive="true"
+    />
+    <template v-else>
+      <span>{{ t('ads.label') }}</span>
+      <small v-if="label">{{ label }}</small>
+    </template>
   </aside>
 </template>
 

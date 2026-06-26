@@ -1,6 +1,17 @@
 {
   "app": {
-    "name": "Mashup Timer"
+    "name": "MashupTimer"
+  },
+  "nav": {
+    "timerMix": "Timer Mix",
+    "playlistTimer": "Playlist Timer",
+    "quickStarts": "Quick Starts",
+    "privacy": "Privacy",
+    "terms": "Terms",
+    "contact": "Contact"
+  },
+  "footer": {
+    "tagline": "Turn Spotify into a music timer."
   },
   "hero": {
     "eyebrow": "Your time, your soundtrack",

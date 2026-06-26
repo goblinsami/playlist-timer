@@ -1,6 +1,17 @@
 {
   "app": {
-    "name": "Mashup Timer"
+    "name": "MashupTimer"
+  },
+  "nav": {
+    "timerMix": "Timer Mix",
+    "playlistTimer": "Playlist Timer",
+    "quickStarts": "Accessos ràpids",
+    "privacy": "Privacitat",
+    "terms": "Termes",
+    "contact": "Contacte"
+  },
+  "footer": {
+    "tagline": "Converteix Spotify en un temporitzador musical."
   },
   "hero": {
     "eyebrow": "El teu temps, la teva banda sonora",

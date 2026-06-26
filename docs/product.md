@@ -1,14 +1,23 @@
-# Mashup Timer product
+# MashupTimer product
 
-Mashup Timer turns Spotify into a music timer. It helps people make a short music
+MashupTimer turns Spotify into a music timer. It helps people make a short music
 session for a shower, workout, break, cooking task, focus session, or any other
 fixed-length activity.
+
+## Launch routes
+
+- `/` explains the product and links to both modes.
+- `/timer-mix` opens Live Timer Mix directly.
+- `/playlist-timer` opens Playlist Timer directly.
+- `/quick-starts` lists presets for showers, pasta, coffee breaks, and focus.
+- SEO pages target specific use cases: Spotify shower timers, 5-minute music
+  timers, pasta timer playlists, and focus music timers.
 
 ## Primary mode: Live Timer Mix
 
 Live Timer Mix is the primary experience. Choose a duration, how many songs to
 play, and a source: Spotify Search, Liked Songs, or one of your playlists.
-Mashup Timer plays a live mini-mix in the browser and stops when the timer ends.
+MashupTimer plays a live mini-mix in the browser and stops when the timer ends.
 
 This mode uses the Spotify Web Playback SDK and requires Spotify Premium,
 because browser playback is available only to Premium accounts. It is
@@ -24,5 +33,5 @@ Spotify.
 
 ## Scope
 
-Mashup Timer does not create accounts, saved playlist history, payments, social
+MashupTimer does not create accounts, saved playlist history, payments, social
 features, or integrations with music services other than Spotify.

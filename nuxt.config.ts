@@ -46,8 +46,13 @@ export default defineNuxtConfig({
     spotifyRedirectUri: '',
     spotifyExportPlaylistPublic: 'false',
     public: {
-      appName: process.env.NUXT_PUBLIC_APP_NAME || 'Mashup Timer',
+      appName: process.env.NUXT_PUBLIC_APP_NAME || 'MashupTimer',
       siteUrl: process.env.NUXT_PUBLIC_SITE_URL || 'http://127.0.0.1:3000',
+      adsEnabled: process.env.NUXT_PUBLIC_ADS_ENABLED || 'false',
+      adsenseClient: process.env.NUXT_PUBLIC_ADSENSE_CLIENT || '',
+      adsenseSlotAfterPreview: process.env.NUXT_PUBLIC_ADSENSE_SLOT_AFTER_PREVIEW || '',
+      adsenseSlotBottom: process.env.NUXT_PUBLIC_ADSENSE_SLOT_BOTTOM || '',
+      adsenseSlotSidebar: process.env.NUXT_PUBLIC_ADSENSE_SLOT_SIDEBAR || '',
     },
   },
   typescript: {
