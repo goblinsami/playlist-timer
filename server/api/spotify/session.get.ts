@@ -8,7 +8,6 @@ export default defineEventHandler((event) => {
 
   return {
     hasAccessToken: Boolean(accessToken),
-    scope,
     hasPlaylistModifyPrivate: scopes.includes('playlist-modify-private'),
     hasPlaylistModifyPublic: scopes.includes('playlist-modify-public'),
     hasPlaylistReadPrivate: scopes.includes('playlist-read-private'),

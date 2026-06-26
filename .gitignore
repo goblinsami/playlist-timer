@@ -2,7 +2,8 @@
 .output
 node_modules
 .env
-.env.example
+.env.*
+!.env.example
 .DS_Store
 npm-debug.log*
 .tmp-nuxt-dev.err.log

@@ -328,7 +328,7 @@ async function loadStoredPreview(previewId: string): Promise<void> {
 
 async function loadSpotifySession(): Promise<void> {
   try {
-    const session = await $fetch<SpotifySessionResponse>('/api/debug/spotify-session')
+    const session = await $fetch<SpotifySessionResponse>('/api/spotify/session')
 
     hasSpotifyAccessToken.value = session.hasAccessToken
     hasPlaylistReadPrivate.value = session.hasPlaylistReadPrivate === true

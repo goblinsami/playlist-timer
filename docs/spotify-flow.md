@@ -89,7 +89,7 @@ For local Spotify OAuth testing, keep the app URL and redirect URI consistent.
   `http://127.0.0.1:3000`
 - Do not mix `localhost` and `127.0.0.1` during OAuth testing.
 - If playlist export returns `403 Forbidden` while adding playlist items, clear cookies
-  for `127.0.0.1:3000`, log in again, and verify
-  `/api/debug/spotify-session` reports both playlist modify scopes as `true`.
+  for `127.0.0.1:3000`, log in again, and verify the session has both playlist
+  modify scopes.
 
 No playlist creation is used for preview generation.

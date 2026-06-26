@@ -3,6 +3,9 @@
 MashupTimer uses Google Analytics 4 through `gtag.js` to measure launch interest
 and key product actions.
 
+The MVP uses the direct GA4 plugin only. Google Tag Manager snippets should not
+be added alongside it, to avoid duplicate page views and events.
+
 Analytics is disabled by default. Enable it only when a GA4 measurement ID is
 configured:
 
