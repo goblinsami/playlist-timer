@@ -83,6 +83,30 @@
     "sdkError": "Error del reproductor de Spotify:",
     "authRequired": "Conecta Spotify para usar Timer Mix."
   },
+  "quickStarts": {
+    "title": "Accesos rápidos",
+    "subtitle": "Empieza con un preset y ajusta lo que quieras.",
+    "selectPlaceholder": "Elige un acceso rápido",
+    "applied": "Preset aplicado. Puedes ajustarlo antes de preparar el mix.",
+    "fastShower": {
+      "title": "Ducha rápida con Chayanne",
+      "description": "5 minutos, 3 canciones de Chayanne y cero excusas."
+    },
+    "pasta": {
+      "title": "Pasta de 10 minutos con Elvis",
+      "description": "Cocina tu pasta con un mini-mix corto de Elvis."
+    },
+    "coffee": {
+      "title": "Pausa café con Dua Lipa",
+      "description": "Un reset pop de 7 minutos antes de volver al trabajo."
+    },
+    "focus": {
+      "title": "Sprint de foco con Hans Zimmer",
+      "description": "15 minutos de modo concentración cinematográfico."
+    },
+    "durationLabel": "min",
+    "songsLabel": "canciones"
+  },
   "playlistTimer": {
     "title": "Playlist Timer",
     "description": "Crea una playlist de Spotify con canciones completas que se ajusta lo máximo posible a tu duración objetivo.",

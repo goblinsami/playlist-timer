@@ -160,6 +160,74 @@ h1 {
   line-height: 1.45;
 }
 
+.sr-only {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border: 0;
+}
+
+.quick-starts {
+  display: grid;
+  gap: 12px;
+  padding: 16px;
+  border: 1px solid #dfe8e1;
+  border-radius: 16px;
+  background: #f8faf8;
+}
+
+.quick-starts h3 {
+  margin: 0 0 4px;
+  color: #2b3730;
+  font-size: 0.95rem;
+}
+
+.quick-start-select select {
+  border-color: rgb(29 185 84 / 30%);
+  background:
+    linear-gradient(135deg, rgb(226 245 232 / 65%), #fff 56%);
+  box-shadow: 0 10px 24px rgb(24 33 28 / 6%);
+  color: #11391f;
+  font-weight: 800;
+}
+
+.quick-start-summary {
+  display: grid;
+  gap: 4px;
+  padding: 12px 14px;
+  border: 1px solid #d9e5dc;
+  border-radius: 12px;
+  background: #fff;
+}
+
+.quick-start-summary strong,
+.quick-start-summary span {
+  display: block;
+}
+
+.quick-start-summary strong {
+  color: #2b3730;
+  font-size: 0.88rem;
+}
+
+.quick-start-summary span {
+  color: #657169;
+  font-size: 0.8rem;
+  line-height: 1.4;
+}
+
+.quick-start-feedback {
+  margin: 0;
+  color: #16833c;
+  font-size: 0.84rem;
+  font-weight: 700;
+}
+
 label,
 legend {
   color: #2b3730;

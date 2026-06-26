@@ -95,6 +95,16 @@ interface StoredFormState {
   selectedPlaylistId: string
 }
 
+type TimerMixQuickStartId = 'fastShower' | 'pasta' | 'coffee' | 'focus'
+
+interface TimerMixQuickStartPreset {
+  id: TimerMixQuickStartId
+  artist: string
+  durationMinutes: number
+  songCount: number
+  fadeSeconds: number
+}
+
 const toleranceByAccuracy: Record<Accuracy, number> = {
   exact: 10,
   balanced: 30,
@@ -104,6 +114,36 @@ const toleranceByAccuracy: Record<Accuracy, number> = {
 const modeOptions: AppMode[] = ['timer-mix', 'playlist-timer']
 const sourceOptions: SourceType[] = ['spotify-search', 'liked-songs', 'user-playlist']
 const selectionModeOptions: SelectionMode[] = ['recent', 'random']
+const timerMixQuickStarts: TimerMixQuickStartPreset[] = [
+  {
+    id: 'fastShower',
+    artist: 'Chayanne',
+    durationMinutes: 5,
+    songCount: 3,
+    fadeSeconds: 4,
+  },
+  {
+    id: 'pasta',
+    artist: 'Elvis Presley',
+    durationMinutes: 10,
+    songCount: 4,
+    fadeSeconds: 5,
+  },
+  {
+    id: 'coffee',
+    artist: 'Dua Lipa',
+    durationMinutes: 7,
+    songCount: 3,
+    fadeSeconds: 4,
+  },
+  {
+    id: 'focus',
+    artist: 'Hans Zimmer',
+    durationMinutes: 15,
+    songCount: 5,
+    fadeSeconds: 6,
+  },
+]
 const FORM_STATE_STORAGE_KEY = 'playlist-timer-form-state'
 const { t, locale, setLocale } = useI18n()
 const route = useRoute()
@@ -134,6 +174,8 @@ const hasUserReadPlaybackState = ref(false)
 const hasUserModifyPlaybackState = ref(false)
 const errorMessage = ref('')
 const timerMixErrorMessage = ref('')
+const selectedQuickStartId = ref<TimerMixQuickStartId | ''>('')
+const quickStartMessage = ref('')
 const exportErrorMessage = ref('')
 const spotifyPlaylistUrl = ref('')
 const localeOptions: LocaleCode[] = ['en', 'es', 'ca']
@@ -388,6 +430,8 @@ function resetRootForm(): void {
   timerMixAccessToken.value = ''
   errorMessage.value = ''
   timerMixErrorMessage.value = ''
+  selectedQuickStartId.value = ''
+  quickStartMessage.value = ''
   exportErrorMessage.value = ''
   spotifyPlaylistUrl.value = ''
   clearStoredFormState()
@@ -622,6 +666,41 @@ function selectMode(mode: AppMode): void {
   appMode.value = mode
   errorMessage.value = ''
   timerMixErrorMessage.value = ''
+  quickStartMessage.value = ''
+}
+
+function applyTimerMixQuickStart(preset: TimerMixQuickStartPreset): void {
+  selectedQuickStartId.value = preset.id
+  appMode.value = 'timer-mix'
+  sourceType.value = 'spotify-search'
+  selectionMode.value = 'random'
+  artist.value = preset.artist
+  durationMinutes.value = preset.durationMinutes
+  songCount.value = preset.songCount
+  fadeSeconds.value = preset.fadeSeconds
+  selectedPlaylistId.value = ''
+  timerMix.value = null
+  timerMixAccessToken.value = ''
+  timerMixErrorMessage.value = ''
+  errorMessage.value = ''
+  quickStartMessage.value = t('quickStarts.applied')
+
+  if (timerMixPlayback.isPlaying.value) {
+    void timerMixPlayback.stopMix()
+  }
+}
+
+function handleTimerMixQuickStartChange(event: Event): void {
+  const target = event.target as HTMLSelectElement
+  const preset = timerMixQuickStarts.find(item => item.id === target.value)
+
+  if (!preset) {
+    selectedQuickStartId.value = ''
+    quickStartMessage.value = ''
+    return
+  }
+
+  applyTimerMixQuickStart(preset)
 }
 
 function isIgnorableReadyPlayerError(message: string): boolean {
@@ -733,6 +812,9 @@ const timerMixPlaybackError = computed(() =>
   timerMixPlayback.error.value
     ? getStatusMessage(timerMixPlayback.error.value)
     : '',
+)
+const selectedQuickStart = computed(() =>
+  timerMixQuickStarts.find(preset => preset.id === selectedQuickStartId.value),
 )
 const sourceConnectLabel = computed(() =>
   sourceType.value === 'liked-songs'
@@ -970,6 +1052,55 @@ const sourceConnectLabel = computed(() =>
                   {{ t('timerMix.helper') }}
                 </p>
               </div>
+
+              <section class="quick-starts" aria-labelledby="quick-starts-title">
+                <div>
+                  <h3 id="quick-starts-title">
+                    {{ t('quickStarts.title') }}
+                  </h3>
+                  <p class="field-hint">
+                    {{ t('quickStarts.subtitle') }}
+                  </p>
+                </div>
+
+                <div class="quick-start-select">
+                  <label class="sr-only" for="timer-mix-quick-start">
+                    {{ t('quickStarts.title') }}
+                  </label>
+                  <div class="select-wrapper">
+                    <select
+                      id="timer-mix-quick-start"
+                      v-model="selectedQuickStartId"
+                      name="timerMixQuickStart"
+                      @change="handleTimerMixQuickStartChange"
+                    >
+                      <option value="">
+                        {{ t('quickStarts.selectPlaceholder') }}
+                      </option>
+                      <option
+                        v-for="preset in timerMixQuickStarts"
+                        :key="preset.id"
+                        :value="preset.id"
+                      >
+                        {{ t(`quickStarts.${preset.id}.title`) }} · {{ preset.durationMinutes }} {{ t('quickStarts.durationLabel') }} · {{ preset.songCount }} {{ t('quickStarts.songsLabel') }}
+                      </option>
+                    </select>
+                  </div>
+                </div>
+
+                <div v-if="selectedQuickStart" class="quick-start-summary">
+                  <strong>{{ t(`quickStarts.${selectedQuickStart.id}.title`) }}</strong>
+                  <span>{{ t(`quickStarts.${selectedQuickStart.id}.description`) }}</span>
+                </div>
+
+                <p
+                  v-if="quickStartMessage"
+                  class="quick-start-feedback"
+                  aria-live="polite"
+                >
+                  {{ quickStartMessage }}
+                </p>
+              </section>
 
               <div class="field">
                 <label for="timer-mix-source">{{ t('timerMix.source') }}</label>
