@@ -92,7 +92,12 @@
     "remaining": "Restante",
     "blockDuration": "Duracion del bloque",
     "sdkError": "Error del reproductor de Spotify:",
-    "authRequired": "Conecta Spotify para usar Timer Mix."
+    "authRequired": "Conecta Spotify para usar Timer Mix.",
+    "progress": {
+      "currentBlock": "Canci\u00f3n actual",
+      "left": "Quedan {time}",
+      "trackCount": "Canci\u00f3n {current} de {total}"
+    }
   },
   "quickStarts": {
     "title": "Accesos rápidos",

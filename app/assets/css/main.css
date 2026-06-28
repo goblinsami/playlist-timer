@@ -811,6 +811,70 @@ button:disabled {
   text-align: right;
 }
 
+.timer-progress {
+  display: grid;
+  gap: 10px;
+  margin: 0 0 18px;
+  padding: 14px 0 16px;
+  border-top: 1px solid #e1e8e3;
+  border-bottom: 1px solid #e1e8e3;
+}
+
+.timer-progress__meta {
+  display: flex;
+  gap: 14px;
+  align-items: start;
+  justify-content: space-between;
+}
+
+.timer-progress__meta div {
+  display: grid;
+  min-width: 0;
+  gap: 3px;
+}
+
+.timer-progress__meta strong {
+  color: #2b3730;
+}
+
+.timer-progress__meta span {
+  color: #718078;
+  font-size: 0.82rem;
+}
+
+.timer-progress__bar {
+  height: 8px;
+  overflow: hidden;
+  border-radius: 999px;
+  background: #e1e8e3;
+}
+
+.timer-progress__fill {
+  width: 100%;
+  height: 100%;
+  border-radius: inherit;
+  background: #16833c;
+  transform: scaleX(0);
+  transform-origin: left center;
+}
+
+.timer-progress--playing .timer-progress__fill {
+  will-change: transform;
+}
+
+.timer-progress__time {
+  flex: 0 0 auto;
+  color: #2b3730;
+  font-weight: 800;
+  text-align: right;
+}
+
+.timer-progress__track-count {
+  color: #718078;
+  font-size: 0.78rem;
+  font-weight: 700;
+}
+
 .warning-list {
   display: grid;
   gap: 8px;
@@ -918,6 +982,14 @@ button:disabled {
 
   .timer-mix-now p {
     display: grid;
+  }
+
+  .timer-progress__meta {
+    display: grid;
+  }
+
+  .timer-progress__time {
+    text-align: left;
   }
 
   .site-nav,

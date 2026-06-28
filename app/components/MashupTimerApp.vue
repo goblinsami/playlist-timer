@@ -210,6 +210,13 @@ const timerMixPlayback = useTimerMix(timerMixPlaybackInput)
 const runtimeConfig = useRuntimeConfig()
 const appName = runtimeConfig.public.appName
 const hasTrackedSpotifySdkReady = ref(false)
+const timerProgressFillElement = ref<HTMLElement | null>(null)
+const timerProgressTimeElement = ref<HTMLElement | null>(null)
+const TIMER_PROGRESS_TEXT_UPDATE_MS = 250
+const REDUCED_MOTION_PROGRESS_UPDATE_MS = 250
+let timerProgressAnimationFrameId: number | null = null
+let timerProgressLastTextUpdateMs = 0
+let timerProgressLastReducedMotionUpdateMs = 0
 
 onMounted(async () => {
   const previewId = getQueryString(route.query.previewId)
@@ -689,6 +696,133 @@ function formatDuration(durationMs: number): string {
   return `${minutes}:${seconds.toString().padStart(2, '0')}`
 }
 
+function formatTimerMixProgressDuration(durationMs: number): string {
+  const totalSeconds = Math.max(0, Math.ceil(durationMs / 1_000))
+  const minutes = Math.floor(totalSeconds / 60)
+  const seconds = totalSeconds % 60
+
+  return `${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}`
+}
+
+function startProgressAnimation(blockStartedAt: number, durationMs: number): void {
+  stopProgressAnimation()
+
+  if (durationMs <= 0 || typeof window === 'undefined') {
+    resetProgressAnimation()
+    return
+  }
+
+  timerProgressLastTextUpdateMs = 0
+  timerProgressLastReducedMotionUpdateMs = Number.NEGATIVE_INFINITY
+  updateProgressFrame(blockStartedAt, durationMs, getProgressNowMs(), true)
+
+  const tick = (frameTimeMs: number) => {
+    if (!timerMixPlayback.isPlaying.value) {
+      timerProgressAnimationFrameId = null
+      return
+    }
+
+    if (
+      !prefersReducedTimerProgressMotion()
+      || frameTimeMs - timerProgressLastReducedMotionUpdateMs >= REDUCED_MOTION_PROGRESS_UPDATE_MS
+    ) {
+      updateProgressFrame(blockStartedAt, durationMs, frameTimeMs)
+      timerProgressLastReducedMotionUpdateMs = frameTimeMs
+    }
+
+    timerProgressAnimationFrameId = window.requestAnimationFrame(tick)
+  }
+
+  timerProgressAnimationFrameId = window.requestAnimationFrame(tick)
+}
+
+function stopProgressAnimation(): void {
+  if (timerProgressAnimationFrameId === null || typeof window === 'undefined') {
+    timerProgressAnimationFrameId = null
+    return
+  }
+
+  window.cancelAnimationFrame(timerProgressAnimationFrameId)
+  timerProgressAnimationFrameId = null
+}
+
+function resetProgressAnimation(): void {
+  stopProgressAnimation()
+  setProgressFill(0)
+  setProgressTime(getTimerMixProgressLabel(timerMix.value?.blockDurationMs ?? 0))
+}
+
+function updateTimerMixProgressAnimation(): void {
+  if (!timerMixPlayback.isPlaying.value) {
+    resetProgressAnimation()
+    return
+  }
+
+  const blockStartedAt = timerMixPlayback.blockStartedAtMs.value
+  const blockDuration = timerMixPlayback.blockDurationMs.value
+
+  if (blockStartedAt <= 0 || blockDuration <= 0) {
+    resetProgressAnimation()
+    return
+  }
+
+  startProgressAnimation(blockStartedAt, blockDuration)
+}
+
+function updateProgressFrame(
+  blockStartedAt: number,
+  blockDurationMs: number,
+  frameTimeMs: number,
+  forceTextUpdate = false,
+): void {
+  const elapsed = frameTimeMs - blockStartedAt
+  const clampedElapsed = Math.min(Math.max(elapsed, 0), blockDurationMs)
+  const progressRatio = clampedElapsed / blockDurationMs
+  const remainingMs = Math.max(blockDurationMs - clampedElapsed, 0)
+
+  setProgressFill(progressRatio)
+
+  if (
+    forceTextUpdate
+    || frameTimeMs - timerProgressLastTextUpdateMs >= TIMER_PROGRESS_TEXT_UPDATE_MS
+    || remainingMs === 0
+  ) {
+    setProgressTime(getTimerMixProgressLabel(remainingMs))
+    timerProgressLastTextUpdateMs = frameTimeMs
+  }
+}
+
+function setProgressFill(progressRatio: number): void {
+  if (!timerProgressFillElement.value) {
+    return
+  }
+
+  timerProgressFillElement.value.style.transform = `scaleX(${progressRatio})`
+}
+
+function setProgressTime(label: string): void {
+  if (!timerProgressTimeElement.value) {
+    return
+  }
+
+  timerProgressTimeElement.value.textContent = label
+}
+
+function getTimerMixProgressLabel(durationMs: number): string {
+  return t('timerMix.progress.left', {
+    time: formatTimerMixProgressDuration(durationMs),
+  })
+}
+
+function prefersReducedTimerProgressMotion(): boolean {
+  return typeof window !== 'undefined'
+    && window.matchMedia('(prefers-reduced-motion: reduce)').matches
+}
+
+function getProgressNowMs(): number {
+  return typeof performance === 'undefined' ? Date.now() : performance.now()
+}
+
 function getQueryString(value: unknown): string {
   return typeof value === 'string' ? value : ''
 }
@@ -937,6 +1071,38 @@ watch(timerMixPlayback.error, (error) => {
   }
 
   trackTimerMixError(new Error(error))
+})
+
+watch(
+  [
+    timerMixPlayback.isPlaying,
+    timerMixPlayback.blockStartedAtMs,
+    timerMixPlayback.blockDurationMs,
+  ],
+  () => {
+    void nextTick(() => updateTimerMixProgressAnimation())
+  },
+  { flush: 'post' },
+)
+
+watch(timerMix, () => {
+  if (timerMixPlayback.isPlaying.value) {
+    return
+  }
+
+  void nextTick(() => resetProgressAnimation())
+})
+
+watch(locale, () => {
+  if (timerMixPlayback.isPlaying.value) {
+    return
+  }
+
+  void nextTick(() => resetProgressAnimation())
+})
+
+onBeforeUnmount(() => {
+  stopProgressAnimation()
 })
 </script>
 
@@ -1548,6 +1714,33 @@ watch(timerMixPlayback.error, (error) => {
                     <strong>{{ t('timerMix.nextTrack') }}</strong>
                     <span>{{ timerMixNextTrack?.name ?? '-' }}</span>
                   </p>
+                </div>
+
+                <div
+                  class="timer-progress"
+                  :class="{ 'timer-progress--playing': timerMixPlayback.isPlaying.value }"
+                >
+                  <div class="timer-progress__meta">
+                    <div>
+                      <strong>{{ t('timerMix.progress.currentBlock') }}</strong>
+                      <span>{{ timerMixCurrentTrack?.name ?? '-' }}</span>
+                    </div>
+                    <span
+                      ref="timerProgressTimeElement"
+                      class="timer-progress__time"
+                    >
+                      {{ getTimerMixProgressLabel(timerMix.blockDurationMs) }}
+                    </span>
+                  </div>
+                  <div class="timer-progress__bar" aria-hidden="true">
+                    <div
+                      ref="timerProgressFillElement"
+                      class="timer-progress__fill"
+                    />
+                  </div>
+                  <span class="timer-progress__track-count">
+                    {{ t('timerMix.progress.trackCount', { current: timerMixPlayback.currentTrackIndex.value + 1, total: timerMix.songCount }) }}
+                  </span>
                 </div>
 
                 <ol class="track-list" :aria-label="t('preview.tracks')">

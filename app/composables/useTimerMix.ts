@@ -25,6 +25,8 @@ const MAX_TRANSITION_FADE_IN_MS = 1500
 export function useTimerMix(input: MaybeRefOrGetter<TimerMixPlaybackInput>) {
   const isPlaying = ref(false)
   const currentTrackIndex = ref(0)
+  const blockStartedAtMs = ref(0)
+  const blockDurationMs = ref(0)
   const elapsedMs = ref(0)
   const error = ref('')
   const timers = new Set<ReturnType<typeof setTimeout>>()
@@ -48,6 +50,8 @@ export function useTimerMix(input: MaybeRefOrGetter<TimerMixPlaybackInput>) {
     queuedTrackUris.clear()
     isPlaying.value = true
     currentTrackIndex.value = 0
+    blockStartedAtMs.value = 0
+    blockDurationMs.value = 0
     elapsedMs.value = 0
     error.value = ''
     startedAtMs = Date.now()
@@ -75,6 +79,7 @@ export function useTimerMix(input: MaybeRefOrGetter<TimerMixPlaybackInput>) {
     clearTimers()
     queuedTrackUris.clear()
     isPlaying.value = false
+    blockStartedAtMs.value = 0
     elapsedMs.value = startedAtMs
       ? Math.min(mixInput.totalDurationMs, Date.now() - startedAtMs)
       : elapsedMs.value
@@ -96,7 +101,6 @@ export function useTimerMix(input: MaybeRefOrGetter<TimerMixPlaybackInput>) {
         return
       }
 
-      currentTrackIndex.value = index
       const currentTrack = mixInput.tracks[index]
       const nextTrack = mixInput.tracks[index + 1]
       const followingTrack = mixInput.tracks[index + 2]
@@ -104,6 +108,7 @@ export function useTimerMix(input: MaybeRefOrGetter<TimerMixPlaybackInput>) {
       if (index === 0) {
         await setVolume(mixInput, 100).catch(() => {})
         await startTrack(mixInput, currentTrack)
+        markCurrentBlock(0, blockDurationMs)
       }
 
       if (nextTrack) {
@@ -116,6 +121,8 @@ export function useTimerMix(input: MaybeRefOrGetter<TimerMixPlaybackInput>) {
           {
             fadeOutMs: transitionFadeOutMs,
             fadeInMs: transitionFadeInMs,
+            blockDurationMs,
+            nextTrackIndex: index + 1,
           },
         )
       }
@@ -150,7 +157,12 @@ export function useTimerMix(input: MaybeRefOrGetter<TimerMixPlaybackInput>) {
     mixInput: TimerMixPlaybackInput,
     nextTrack: TimerMixPlaybackTrack,
     followingTrack: TimerMixPlaybackTrack | undefined,
-    durations: { fadeOutMs: number, fadeInMs: number },
+    durations: {
+      fadeOutMs: number
+      fadeInMs: number
+      blockDurationMs: number
+      nextTrackIndex: number
+    },
   ): Promise<void> {
     console.debug('timerMix: transition start')
     await fade(mixInput, TRANSITION_FADE_OUT_STEPS, durations.fadeOutMs)
@@ -167,6 +179,7 @@ export function useTimerMix(input: MaybeRefOrGetter<TimerMixPlaybackInput>) {
 
     if (skipped) {
       console.debug('timerMix: skip next success')
+      markCurrentBlock(durations.nextTrackIndex, durations.blockDurationMs)
       if (followingTrack) {
         await queueNextTrack(mixInput, followingTrack)
       }
@@ -182,12 +195,20 @@ export function useTimerMix(input: MaybeRefOrGetter<TimerMixPlaybackInput>) {
       throw new Error('TIMER_MIX_PLAY_FAILED')
     }
 
+    markCurrentBlock(durations.nextTrackIndex, durations.blockDurationMs)
+
     if (followingTrack) {
       await queueNextTrack(mixInput, followingTrack)
     }
 
     await wait(SKIP_SETTLE_MS)
     await fade(mixInput, TRANSITION_FADE_IN_STEPS, durations.fadeInMs)
+  }
+
+  function markCurrentBlock(index: number, durationMs: number): void {
+    currentTrackIndex.value = index
+    blockStartedAtMs.value = getTimerNowMs()
+    blockDurationMs.value = durationMs
   }
 
   function startElapsedClock(): void {
@@ -268,6 +289,8 @@ export function useTimerMix(input: MaybeRefOrGetter<TimerMixPlaybackInput>) {
   return {
     isPlaying,
     currentTrackIndex,
+    blockStartedAtMs,
+    blockDurationMs,
     elapsedMs,
     remainingMs,
     error,
@@ -425,4 +448,8 @@ function getTransitionFadeInMs(fadeDurationMs: number): number {
 
 function clamp(value: number, min: number, max: number): number {
   return Math.min(Math.max(value, min), max)
+}
+
+function getTimerNowMs(): number {
+  return typeof performance === 'undefined' ? Date.now() : performance.now()
 }
