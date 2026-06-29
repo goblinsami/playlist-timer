@@ -1,8 +1,11 @@
 <script setup lang="ts">
-const { t } = useI18n()
+type LocaleCode = 'en' | 'es' | 'ca'
+
+const { t, locale, setLocale } = useI18n()
 const route = useRoute()
 const runtimeConfig = useRuntimeConfig()
 const appName = computed(() => String(runtimeConfig.public.appName || 'MashupTimer'))
+const localeOptions: LocaleCode[] = ['en', 'es', 'ca']
 const isMobileNavVisible = ref(false)
 const isMobileMenuOpen = ref(false)
 const mobileNavThreshold = 64
@@ -14,6 +17,13 @@ function closeMobileMenu(): void {
 
 function toggleMobileMenu(): void {
   isMobileMenuOpen.value = !isMobileMenuOpen.value
+}
+
+function handleLocaleChange(event: Event): void {
+  const target = event.target as HTMLSelectElement
+
+  void setLocale(target.value as LocaleCode)
+  closeMobileMenu()
 }
 
 function syncMobileNavVisibility(): void {
@@ -68,6 +78,19 @@ onBeforeUnmount(() => {
     <NuxtLink class="site-brand" to="/" @click="closeMobileMenu">
       {{ appName }}
     </NuxtLink>
+
+    <label class="site-language-switcher">
+      <span>{{ t('language.label') }}</span>
+      <select :value="locale" name="language" @change="handleLocaleChange">
+        <option
+          v-for="localeCode in localeOptions"
+          :key="localeCode"
+          :value="localeCode"
+        >
+          {{ t(`language.options.${localeCode}`) }}
+        </option>
+      </select>
+    </label>
 
     <button
       class="site-nav-menu-button"

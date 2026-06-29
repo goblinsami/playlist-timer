@@ -92,6 +92,27 @@ select {
   color: #16833c;
 }
 
+.site-language-switcher {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-left: auto;
+  color: #657169;
+  font-size: 0.78rem;
+  font-weight: 800;
+}
+
+.site-language-switcher select {
+  width: auto;
+  min-height: 36px;
+  padding: 0 40px 0 12px;
+  border-radius: 999px;
+  background: #f8faf8;
+  color: #2b3730;
+  font-size: 0.82rem;
+  font-weight: 700;
+}
+
 .site-nav-menu-button {
   min-height: 40px;
   width: 40px;
@@ -170,31 +191,8 @@ select {
   flex-direction: column;
 }
 
-.language-switcher {
-  display: flex;
-  width: fit-content;
-  max-width: 100%;
-  align-items: center;
-  gap: 8px;
-  margin: 0 0 24px auto;
-  color: #657169;
-  font-size: 0.78rem;
-  font-weight: 800;
-}
-
 .empty {
   color: red;
-}
-
-.language-switcher select {
-  width: auto;
-  min-height: 36px;
-  padding: 0 40px 0 12px;
-  border-radius: 999px;
-  background: #f8faf8;
-  color: #2b3730;
-  font-size: 0.82rem;
-  font-weight: 700;
 }
 
 .hero {
@@ -783,11 +781,36 @@ button:disabled {
 }
 
 .timer-mix-preview--playing .timer-mix-player-state {
-  order: 1;
+  display: contents;
 }
 
 .timer-mix-preview--playing .timer-mix-summary {
+  order: 6;
+}
+
+.timer-mix-preview--playing .timer-progress {
+  order: 1;
+  margin-top: 16px;
+}
+
+.timer-mix-preview--playing .track-list {
+  order: 2;
+}
+
+.timer-mix-preview--playing .timer-mix-now {
   order: 3;
+}
+
+.timer-mix-preview--playing .timer-mix-next {
+  order: 4;
+}
+
+.timer-mix-preview--playing .timer-mix-stop-row {
+  order: 5;
+}
+
+.timer-mix-preview--playing .warning-list {
+  order: 7;
 }
 
 .preview-empty,
@@ -945,6 +968,35 @@ button:disabled {
   text-transform: uppercase;
 }
 
+.timer-mix-now__label {
+  display: inline-flex;
+  align-items: center;
+  gap: 0;
+}
+
+.timer-mix-next {
+  display: grid;
+  gap: 8px;
+  margin: 0 0 18px;
+}
+
+.timer-mix-next p {
+  display: flex;
+  gap: 10px;
+  justify-content: space-between;
+  padding: 10px 0;
+  border-top: 1px solid #e1e8e3;
+}
+
+.timer-mix-next strong {
+  color: #2b3730;
+}
+
+.timer-mix-next span {
+  color: #718078;
+  text-align: right;
+}
+
 .timer-mix-stop-row {
   margin-top: 4px;
 }
@@ -1063,7 +1115,6 @@ button:disabled {
     align-items: start;
   }
 
-  .page-shell--timer-mix .language-switcher,
   .page-shell--timer-mix .seo-content {
     grid-column: 1 / -1;
   }
@@ -1136,6 +1187,7 @@ button:disabled {
     width: auto;
     align-items: center;
     flex-direction: row;
+    gap: 8px;
     padding: 10px 12px;
     border: 1px solid #dfe8e1;
     border-radius: 14px;
@@ -1186,6 +1238,26 @@ button:disabled {
   .site-nav-links .dev-cookie-button {
     display: none;
   }
+
+  .site-language-switcher {
+    margin-left: 0;
+  }
+
+  .site-language-switcher span {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    overflow: hidden;
+    clip: rect(0 0 0 0);
+    white-space: nowrap;
+  }
+
+  .site-language-switcher select {
+    min-height: 40px;
+    max-width: 120px;
+    padding-right: 32px;
+    padding-left: 10px;
+  }
 }
 
 @media (max-width: 560px) {
@@ -1196,12 +1268,6 @@ button:disabled {
   .app-card {
     padding: 32px 22px;
     border-radius: 20px;
-  }
-
-  .language-switcher {
-    width: 100%;
-    justify-content: space-between;
-    margin-bottom: 22px;
   }
 
   .preview-empty,
@@ -1221,7 +1287,8 @@ button:disabled {
     grid-template-columns: 1fr;
   }
 
-  .timer-mix-now p {
+  .timer-mix-now p,
+  .timer-mix-next p {
     display: grid;
   }
 

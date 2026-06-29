@@ -10,7 +10,6 @@ import {
 
 type Accuracy = 'exact' | 'balanced' | 'flexible'
 type AppMode = 'playlist-timer' | 'timer-mix'
-type LocaleCode = 'en' | 'es' | 'ca'
 type SourceType = 'spotify-search' | 'liked-songs' | 'user-playlist'
 type SelectionMode = 'recent' | 'random'
 
@@ -169,7 +168,7 @@ const quickStartAnalyticsNames: Record<TimerMixQuickStartId, string> = {
   focus: 'focus_sprint',
 }
 const FORM_STATE_STORAGE_KEY = 'playlist-timer-form-state'
-const { t, locale, setLocale } = useI18n()
+const { t, locale } = useI18n()
 const route = useRoute()
 const router = useRouter()
 const appMode = ref<AppMode>(props.initialMode)
@@ -203,7 +202,6 @@ const quickStartMessage = ref('')
 const timerMixStatusMessage = ref('')
 const exportErrorMessage = ref('')
 const spotifyPlaylistUrl = ref('')
-const localeOptions: LocaleCode[] = ['en', 'es', 'ca']
 const spotifyPlayer = useSpotifyPlayer()
 const timerMixPlaybackInput = computed(() => ({
   deviceId: spotifyPlayer.deviceId.value,
@@ -236,6 +234,7 @@ onMounted(async () => {
   const spotifyError = getQueryString(route.query.spotifyError)
   const rawSourceType = getQueryString(route.query.sourceType || route.query.source)
   const querySourceType = getSourceType(route.query.sourceType || route.query.source)
+  const queryQuickStartId = getTimerMixQuickStartId(getQueryString(route.query.quickStartId || route.query.quickStart))
   const isTimerMixOAuthReturn = rawSourceType === 'timer-mix'
   const shouldRestoreTimerMixOAuthState = spotifyAuth === 'success' || isTimerMixOAuthReturn
 
@@ -256,7 +255,7 @@ onMounted(async () => {
   await loadSpotifySession()
 
   if (shouldRestoreTimerMixOAuthState) {
-    restorePendingTimerMixOAuthState(spotifyAuth === 'success')
+    restorePendingTimerMixOAuthState(spotifyAuth === 'success', queryQuickStartId)
 
     if (sourceType.value === 'user-playlist' && hasRequiredSourceAuth.value) {
       await loadUserPlaylists()
@@ -446,7 +445,14 @@ function connectSpotifyForSource(): void {
 
 function connectSpotifyForTimerMix(): void {
   savePendingTimerMixOAuthState()
-  window.location.href = '/api/spotify/login?sourceType=timer-mix'
+  const quickStartId = selectedQuickStartId.value || getMatchingTimerMixQuickStartId()
+  const params = new URLSearchParams({ sourceType: 'timer-mix' })
+
+  if (quickStartId) {
+    params.set('quickStartId', quickStartId)
+  }
+
+  window.location.href = `/api/spotify/login?${params.toString()}`
 }
 
 function connectSpotifyForTimerMixSource(): void {
@@ -580,11 +586,13 @@ function createPendingTimerMixOAuthState(): TimerMixOAuthState {
   }
 }
 
-function restorePendingTimerMixOAuthState(isSuccessReturn: boolean): void {
+function restorePendingTimerMixOAuthState(isSuccessReturn: boolean, fallbackQuickStartId: TimerMixQuickStartId | '' = ''): void {
   const hadPendingState = hasTimerMixState()
   const pendingState = loadTimerMixState()
 
   if (!pendingState) {
+    restoreTimerMixQuickStartFromFallback(fallbackQuickStartId)
+
     if (hadPendingState) {
       trackTimerMixOAuthStateCleared('expired')
     }
@@ -603,6 +611,7 @@ function restorePendingTimerMixOAuthState(isSuccessReturn: boolean): void {
   songCount.value = pendingState.songCount
   fadeSeconds.value = pendingState.fadeSeconds
   selectedQuickStartId.value = getTimerMixQuickStartId(pendingState.selectedQuickStartId)
+    || fallbackQuickStartId
     || getMatchingTimerMixQuickStartId()
   timerMix.value = getRestorablePreparedTimerMix(pendingState.preparedMix)
   timerMixAccessToken.value = ''
@@ -617,6 +626,29 @@ function restorePendingTimerMixOAuthState(isSuccessReturn: boolean): void {
     })
     clearTimerMixState()
   }
+}
+
+function restoreTimerMixQuickStartFromFallback(quickStartId: TimerMixQuickStartId | ''): void {
+  if (!quickStartId) {
+    return
+  }
+
+  const preset = timerMixQuickStarts.find(item => item.id === quickStartId)
+
+  if (!preset) {
+    return
+  }
+
+  appMode.value = 'timer-mix'
+  sourceType.value = 'spotify-search'
+  selectionMode.value = 'random'
+  artist.value = preset.artist
+  durationMinutes.value = preset.durationMinutes
+  songCount.value = preset.songCount
+  fadeSeconds.value = preset.fadeSeconds
+  selectedPlaylistId.value = ''
+  selectedQuickStartId.value = preset.id
+  quickStartMessage.value = ''
 }
 
 function getRestorablePreparedTimerMix(preparedMix: TimerMixOAuthPreparedMix | null): TimerMixResponse | null {
@@ -972,6 +1004,7 @@ async function cleanSpotifyAuthQuery(): Promise<void> {
   delete nextQuery.spotifyAuth
   delete nextQuery.spotifyError
   delete nextQuery.sourceType
+  delete nextQuery.quickStartId
 
   await router.replace({
     path: route.path,
@@ -1158,12 +1191,6 @@ function getSelectionModeLabelKey(value: SelectionMode): string {
   return keys[value]
 }
 
-function handleLocaleChange(event: Event): void {
-  const target = event.target as HTMLSelectElement
-
-  void setLocale(target.value as LocaleCode)
-}
-
 async function handleSourceChange(): Promise<void> {
   if (sourceType.value === 'user-playlist' && hasRequiredSourceAuth.value) {
     await loadUserPlaylists()
@@ -1332,19 +1359,6 @@ onBeforeUnmount(() => {
 
         <div class="primary-column">
           <section class="app-card" aria-labelledby="page-title">
-            <label class="language-switcher">
-              <span>{{ t('language.label') }}</span>
-              <select :value="locale" name="language" @change="handleLocaleChange">
-                <option
-                  v-for="localeCode in localeOptions"
-                  :key="localeCode"
-                  :value="localeCode"
-                >
-                  {{ t(`language.options.${localeCode}`) }}
-                </option>
-              </select>
-            </label>
-
             <header v-if="!isDedicatedTimerMixPage" class="hero">
               <p class="eyebrow">
                 <NuxtLink class="app-home-link" to="/" @click="resetRootForm">
@@ -1544,14 +1558,7 @@ onBeforeUnmount(() => {
               <div>
                 <h2 class="section-title">
                   {{ t('timerMix.title') }}
-                  <span class="feature-badge">{{ t('timerMix.experimental') }}</span>
                 </h2>
-                <p class="field-hint">
-                  {{ t('timerMix.description', { appName }) }}
-                </p>
-                <p class="field-hint">
-                  {{ t('timerMix.helper') }}
-                </p>
               </div>
 
               <section class="quick-starts" aria-labelledby="quick-starts-title">
@@ -1633,6 +1640,11 @@ onBeforeUnmount(() => {
                     {{ t('timerMix.start') }}
                   </button>
                 </div>
+              </div>
+
+              <div class="field-hint timer-mix-explainer">
+                <p>{{ t('timerMix.description', { appName }) }}</p>
+                <p>{{ t('timerMix.helper') }}</p>
               </div>
 
               <div class="field">
@@ -1940,9 +1952,6 @@ onBeforeUnmount(() => {
                       {{ t('timerMix.requiresPremium') }}
                     </p>
                   </div>
-                  <span class="preview-status preview-status--success">
-                    {{ timerMix.songCount }}
-                  </span>
                 </div>
 
                 <dl class="preview-stats timer-mix-summary">
@@ -1970,17 +1979,15 @@ onBeforeUnmount(() => {
                       v-if="timerMixPlayback.isPlaying.value"
                       class="timer-mix-now__current"
                     >
-                      <span>{{ t('timerMix.nowPlaying') }}</span>
+                      <span class="timer-mix-now__label">
+                        {{ t('timerMix.nowPlaying') }}
+                      </span>
                       <strong>{{ timerMixCurrentTrack?.name ?? '-' }}</strong>
                       <span>{{ timerMixCurrentTrack?.artist ?? '-' }}</span>
                     </p>
                     <p v-else>
                       <strong>{{ t('timerMix.currentTrack') }}</strong>
                       <span>{{ timerMixCurrentTrack?.name ?? '-' }}</span>
-                    </p>
-                    <p>
-                      <strong>{{ t('timerMix.nextTrack') }}</strong>
-                      <span>{{ timerMixNextTrack?.name ?? '-' }}</span>
                     </p>
                   </div>
 
@@ -2009,6 +2016,13 @@ onBeforeUnmount(() => {
                     <span class="timer-progress__track-count">
                       {{ t('timerMix.progress.trackCount', { current: timerMixPlayback.currentTrackIndex.value + 1, total: timerMix.songCount }) }}
                     </span>
+                  </div>
+
+                  <div class="timer-mix-next">
+                    <p>
+                      <strong>{{ t('timerMix.nextTrack') }}</strong>
+                      <span>{{ timerMixNextTrack?.name ?? '-' }}</span>
+                    </p>
                   </div>
 
                   <div v-if="timerMixPlayback.isPlaying.value" class="button-row timer-mix-stop-row">

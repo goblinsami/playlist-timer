@@ -86,7 +86,7 @@ export default defineEventHandler(async (event) => {
 
 function createAppRedirectUrl(
   event: H3Event,
-  parsedState: { previewId: string, sourceType: string },
+  parsedState: { previewId: string, sourceType: string, quickStartId: string },
 ): URL {
   const requestUrl = getRequestURL(event)
   const redirectUrl = new URL('/', requestUrl.origin)
@@ -99,26 +99,40 @@ function createAppRedirectUrl(
     redirectUrl.searchParams.set('sourceType', parsedState.sourceType)
   }
 
+  if (parsedState.quickStartId) {
+    redirectUrl.searchParams.set('quickStartId', parsedState.quickStartId)
+  }
+
   return redirectUrl
 }
 
-function parseSpotifyState(state: string): { previewId: string, sourceType: string } {
+function parseSpotifyState(state: string): { previewId: string, sourceType: string, quickStartId: string } {
   if (state.startsWith('preview:')) {
     return {
       previewId: state.slice('preview:'.length),
       sourceType: '',
+      quickStartId: '',
     }
   }
 
   if (state.startsWith('source:')) {
+    const sourceState = state.slice('source:'.length)
+    const [sourceType = '', marker = '', quickStartId = ''] = sourceState.split(':')
+
     return {
       previewId: '',
-      sourceType: state.slice('source:'.length),
+      sourceType,
+      quickStartId: marker === 'quickStart' && isSafeStateValue(quickStartId) ? quickStartId : '',
     }
   }
 
   return {
     previewId: state,
     sourceType: '',
+    quickStartId: '',
   }
+}
+
+function isSafeStateValue(value: string): boolean {
+  return /^[A-Za-z0-9_-]{1,64}$/.test(value)
 }

@@ -11,7 +11,8 @@ export default defineEventHandler(async (event) => {
   const query = getQuery(event)
   const previewId = typeof query.previewId === 'string' ? query.previewId : ''
   const sourceType = typeof query.sourceType === 'string' ? query.sourceType : ''
-  const state = createSpotifyState(previewId, sourceType)
+  const quickStartId = typeof query.quickStartId === 'string' ? query.quickStartId : ''
+  const state = createSpotifyState(previewId, sourceType, quickStartId)
 
   if (!state) {
     throw createError({
@@ -52,14 +53,22 @@ export default defineEventHandler(async (event) => {
   return await sendRedirect(event, `${SPOTIFY_AUTHORIZE_URL}?${params.toString()}`)
 })
 
-function createSpotifyState(previewId: string, sourceType: string): string {
+function createSpotifyState(previewId: string, sourceType: string, quickStartId: string): string {
   if (previewId) {
     return `preview:${previewId}`
   }
 
   if (LOGIN_SOURCE_TYPES.has(sourceType)) {
+    if (sourceType === 'timer-mix' && isSafeStateValue(quickStartId)) {
+      return `source:${sourceType}:quickStart:${quickStartId}`
+    }
+
     return `source:${sourceType}`
   }
 
   return ''
+}
+
+function isSafeStateValue(value: string): boolean {
+  return /^[A-Za-z0-9_-]{1,64}$/.test(value)
 }
