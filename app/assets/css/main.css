@@ -129,6 +129,10 @@ select {
   font-weight: 800;
 }
 
+.empty {
+  color: red;
+}
+
 .language-switcher select {
   width: auto;
   min-height: 36px;
