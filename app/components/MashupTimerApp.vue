@@ -2036,7 +2036,13 @@ onBeforeUnmount(() => {
                 </div>
 
                 <ol class="track-list" :aria-label="t('preview.tracks')">
-                  <li v-for="track in timerMix.tracks" :key="track.id">
+                  <li
+                    v-for="(track, trackIndex) in timerMix.tracks"
+                    :key="track.id"
+                    :class="{
+                      'track-list__item--current': timerMixPlayback.isPlaying.value && trackIndex === timerMixPlayback.currentTrackIndex.value,
+                    }"
+                  >
                     <div>
                       <strong>{{ track.name }}</strong>
                       <span>{{ track.artist }}</span>
