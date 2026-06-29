@@ -1,4 +1,6 @@
 <script setup lang="ts">
+import { clearTimerMixState, hasTimerMixState } from '~/utils/timerMixPersistence'
+
 const quickStarts = [
   {
     title: 'Fast Shower with Chayanne',
@@ -26,7 +28,30 @@ const quickStarts = [
   },
 ]
 
+type TimerMixOAuthClearReason = 'root_visit' | 'new_mix' | 'preset_change'
+
+const route = useRoute()
+
+onMounted(async () => {
+  const spotifyAuth = getQueryString(route.query.spotifyAuth)
+  const spotifyError = getQueryString(route.query.spotifyError)
+  const sourceType = getQueryString(route.query.sourceType)
+
+  if (sourceType === 'timer-mix' && (spotifyAuth === 'success' || spotifyError)) {
+    await navigateTo({
+      path: '/timer-mix',
+      query: route.query,
+    }, { replace: true })
+    return
+  }
+
+  if (spotifyAuth !== 'success') {
+    clearPendingTimerMixState('root_visit')
+  }
+})
+
 function trackLandingTimerMixClick(): void {
+  clearPendingTimerMixState('new_mix')
   trackEvent('landing_cta_timer_mix_click')
 }
 
@@ -35,7 +60,23 @@ function trackLandingPlaylistTimerClick(): void {
 }
 
 function trackQuickStartClick(presetName: string): void {
+  clearPendingTimerMixState('preset_change')
   trackEvent('quick_start_click', { preset_name: presetName })
+}
+
+function clearPendingTimerMixState(reason: TimerMixOAuthClearReason): void {
+  if (!hasTimerMixState()) {
+    return
+  }
+
+  clearTimerMixState()
+  trackEvent('timer_mix_oauth_state_cleared', {
+    reason,
+  })
+}
+
+function getQueryString(value: unknown): string {
+  return typeof value === 'string' ? value : ''
 }
 
 usePageSeo({

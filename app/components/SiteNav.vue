@@ -29,6 +29,7 @@ const appName = computed(() => String(runtimeConfig.public.appName || 'MashupTim
       <NuxtLink to="/contact">
         {{ t('nav.contact') }}
       </NuxtLink>
+      <DevCookieButton />
     </nav>
   </header>
 </template>

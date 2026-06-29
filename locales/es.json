@@ -83,6 +83,7 @@
     "prepare": "Preparar mix",
     "connectSpotify": "Conectar Spotify",
     "connecting": "Conectando...",
+    "oauthReady": "Spotify conectado. Tu mix esta listo.",
     "start": "Iniciar Timer Mix",
     "stop": "Parar",
     "requiresPremium": "Timer Mix requiere Spotify Premium porque Spotify solo permite la reproducción en el navegador para cuentas Premium.",

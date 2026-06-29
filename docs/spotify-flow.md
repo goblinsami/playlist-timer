@@ -26,6 +26,18 @@ Playlist preview and playlist export use separate Spotify authorization flows.
   browser session storage. When the user returns from OAuth/export, the form is
   restored so the selected source, artist/filter, duration, playlist, and mode
   remain visible.
+- Timer Mix stores a separate pending OAuth UI state in session storage before
+  sending the user to Spotify. The payload can include the prepared mix response
+  and form fields, but never Spotify tokens, secrets, cookies, Spotify user IDs,
+  analytics IDs, or client secrets. It expires after 30 minutes.
+- After a successful Timer Mix OAuth return, the app restores the form and any
+  prepared mix with valid Spotify track URIs, cleans the temporary OAuth query
+  parameters with client-side routing, and waits for the user to click Start
+  Timer Mix. Playback is not auto-started after OAuth.
+- Pending Timer Mix OAuth state is cleared when the user visits `/` normally,
+  starts a new mix, changes Timer Mix source or Quick Start preset, prepares a
+  new mix, starts the restored mix successfully, or when the pending state has
+  expired.
 - Clicking the app name navigates back to `/`, clears URL parameters, and resets
   the local form state.
 - OAuth requests `playlist-modify-private`, `playlist-modify-public`,

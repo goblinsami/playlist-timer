@@ -1,4 +1,13 @@
 <script setup lang="ts">
+import {
+  clearTimerMixState,
+  hasTimerMixState,
+  loadTimerMixState,
+  saveTimerMixState,
+  type TimerMixOAuthPreparedMix,
+  type TimerMixOAuthState,
+} from '~/utils/timerMixPersistence'
+
 type Accuracy = 'exact' | 'balanced' | 'flexible'
 type AppMode = 'playlist-timer' | 'timer-mix'
 type LocaleCode = 'en' | 'es' | 'ca'
@@ -96,6 +105,7 @@ interface StoredFormState {
 }
 
 type TimerMixQuickStartId = 'fastShower' | 'pasta' | 'coffee' | 'focus'
+type TimerMixOAuthClearReason = 'root_visit' | 'new_mix' | 'source_change' | 'preset_change' | 'prepare_new_mix' | 'start_mix' | 'expired'
 
 interface TimerMixQuickStartPreset {
   id: TimerMixQuickStartId
@@ -190,6 +200,7 @@ const errorMessage = ref('')
 const timerMixErrorMessage = ref('')
 const selectedQuickStartId = ref<TimerMixQuickStartId | ''>('')
 const quickStartMessage = ref('')
+const timerMixStatusMessage = ref('')
 const exportErrorMessage = ref('')
 const spotifyPlaylistUrl = ref('')
 const localeOptions: LocaleCode[] = ['en', 'es', 'ca']
@@ -224,12 +235,14 @@ onMounted(async () => {
   const spotifyError = getQueryString(route.query.spotifyError)
   const rawSourceType = getQueryString(route.query.sourceType || route.query.source)
   const querySourceType = getSourceType(route.query.sourceType || route.query.source)
+  const isTimerMixOAuthReturn = rawSourceType === 'timer-mix'
+  const shouldRestoreTimerMixOAuthState = spotifyAuth === 'success' || isTimerMixOAuthReturn
 
-  if (previewId || spotifyAuth || spotifyError) {
+  if ((previewId || spotifyAuth || spotifyError) && !isTimerMixOAuthReturn) {
     restoreStoredFormState()
   }
 
-  if (rawSourceType === 'timer-mix') {
+  if (isTimerMixOAuthReturn) {
     appMode.value = 'timer-mix'
   }
 
@@ -241,9 +254,26 @@ onMounted(async () => {
 
   await loadSpotifySession()
 
+  if (shouldRestoreTimerMixOAuthState) {
+    restorePendingTimerMixOAuthState(spotifyAuth === 'success')
+
+    if (sourceType.value === 'user-playlist' && hasRequiredSourceAuth.value) {
+      await loadUserPlaylists()
+    }
+
+    if (spotifyAuth === 'success' && hasTimerMixPlaybackAuth.value) {
+      await spotifyPlayer.connectPlayer()
+    }
+  }
+
   if (spotifyError) {
     exportErrorMessage.value = getStatusMessage(spotifyError)
+    await cleanSpotifyAuthQuery()
     return
+  }
+
+  if (spotifyAuth === 'success' && isTimerMixOAuthReturn) {
+    await cleanSpotifyAuthQuery()
   }
 
   if (!previewId) {
@@ -414,8 +444,16 @@ function connectSpotifyForSource(): void {
 }
 
 function connectSpotifyForTimerMix(): void {
-  saveFormState()
+  savePendingTimerMixOAuthState()
   window.location.href = '/api/spotify/login?sourceType=timer-mix'
+}
+
+function connectSpotifyForTimerMixSource(): void {
+  trackEvent('spotify_connect_click', {
+    mode: 'timer-mix',
+    source_type: sourceType.value,
+  })
+  connectSpotifyForTimerMix()
 }
 
 function resetRootForm(): void {
@@ -435,9 +473,11 @@ function resetRootForm(): void {
   timerMixErrorMessage.value = ''
   selectedQuickStartId.value = ''
   quickStartMessage.value = ''
+  timerMixStatusMessage.value = ''
   exportErrorMessage.value = ''
   spotifyPlaylistUrl.value = ''
   clearStoredFormState()
+  clearPendingTimerMixState('root_visit')
 
   if (timerMixPlayback.isPlaying.value) {
     void timerMixPlayback.stopMix()
@@ -513,13 +553,106 @@ function clearStoredFormState(): void {
   sessionStorage.removeItem(FORM_STATE_STORAGE_KEY)
 }
 
+function savePendingTimerMixOAuthState(): void {
+  saveTimerMixState(createPendingTimerMixOAuthState())
+}
+
+function createPendingTimerMixOAuthState(): TimerMixOAuthState {
+  const playlistName = playlists.value.find(playlist => playlist.id === selectedPlaylistId.value)?.name
+    ?? timerMix.value?.source.playlistName
+    ?? ''
+
+  return {
+    activeMode: 'timer-mix',
+    sourceType: 'timer-mix',
+    timerMixSourceType: sourceType.value,
+    artist: sourceType.value === 'spotify-search' ? artist.value : '',
+    artistFilter: sourceType.value === 'spotify-search' ? '' : artist.value,
+    selectedPlaylistId: selectedPlaylistId.value,
+    selectedPlaylistName: playlistName,
+    durationMinutes: durationMinutes.value,
+    songCount: songCount.value,
+    fadeSeconds: fadeSeconds.value,
+    selectionMode: selectionMode.value,
+    selectedQuickStartId: selectedQuickStartId.value,
+    preparedMix: timerMix.value,
+  }
+}
+
+function restorePendingTimerMixOAuthState(isSuccessReturn: boolean): void {
+  const hadPendingState = hasTimerMixState()
+  const pendingState = loadTimerMixState()
+
+  if (!pendingState) {
+    if (hadPendingState) {
+      trackTimerMixOAuthStateCleared('expired')
+    }
+
+    return
+  }
+
+  appMode.value = 'timer-mix'
+  sourceType.value = pendingState.timerMixSourceType
+  selectionMode.value = pendingState.selectionMode
+  artist.value = pendingState.timerMixSourceType === 'spotify-search'
+    ? pendingState.artist
+    : pendingState.artistFilter
+  selectedPlaylistId.value = pendingState.selectedPlaylistId
+  durationMinutes.value = pendingState.durationMinutes
+  songCount.value = pendingState.songCount
+  fadeSeconds.value = pendingState.fadeSeconds
+  selectedQuickStartId.value = getTimerMixQuickStartId(pendingState.selectedQuickStartId)
+  timerMix.value = getRestorablePreparedTimerMix(pendingState.preparedMix)
+  timerMixAccessToken.value = ''
+  timerMixErrorMessage.value = ''
+  errorMessage.value = ''
+
+  if (isSuccessReturn) {
+    timerMixStatusMessage.value = t('timerMix.oauthReady')
+    trackEvent('timer_mix_oauth_state_restored', {
+      restored_prepared_mix: Boolean(timerMix.value),
+      source_type: pendingState.timerMixSourceType,
+    })
+    clearTimerMixState()
+  }
+}
+
+function getRestorablePreparedTimerMix(preparedMix: TimerMixOAuthPreparedMix | null): TimerMixResponse | null {
+  if (!preparedMix) {
+    return null
+  }
+
+  const hasOnlySpotifyTracks = preparedMix.tracks.every(track =>
+    typeof track.spotifyUri === 'string' && track.spotifyUri.startsWith('spotify:track:'),
+  )
+
+  return hasOnlySpotifyTracks ? preparedMix : null
+}
+
+function clearPendingTimerMixState(reason: TimerMixOAuthClearReason): void {
+  if (!hasTimerMixState()) {
+    return
+  }
+
+  clearTimerMixState()
+  trackTimerMixOAuthStateCleared(reason)
+}
+
+function trackTimerMixOAuthStateCleared(reason: TimerMixOAuthClearReason): void {
+  trackEvent('timer_mix_oauth_state_cleared', {
+    reason,
+  })
+}
+
 async function prepareTimerMix(): Promise<void> {
   const requestedSourceType = sourceType.value
   const requestedDurationMinutes = durationMinutes.value
   const requestedSongCount = songCount.value
 
+  clearPendingTimerMixState('prepare_new_mix')
   isPreparingMix.value = true
   timerMixErrorMessage.value = ''
+  timerMixStatusMessage.value = ''
   timerMix.value = null
   trackEvent('timer_mix_prepare_click', {
     source_type: requestedSourceType,
@@ -595,6 +728,10 @@ async function startTimerMix(): Promise<void> {
       duration_minutes: requestedDurationMinutes,
     })
     await timerMixPlayback.startMix()
+
+    if (!timerMixPlayback.error.value) {
+      clearPendingTimerMixState('start_mix')
+    }
 
     if (!timerMixPlayback.error.value && timerMixPlayback.remainingMs.value === 0) {
       trackEvent('timer_mix_completed')
@@ -827,6 +964,19 @@ function getQueryString(value: unknown): string {
   return typeof value === 'string' ? value : ''
 }
 
+async function cleanSpotifyAuthQuery(): Promise<void> {
+  const nextQuery = { ...route.query }
+
+  delete nextQuery.spotifyAuth
+  delete nextQuery.spotifyError
+  delete nextQuery.sourceType
+
+  await router.replace({
+    path: route.path,
+    query: nextQuery,
+  })
+}
+
 function getQueryNumber(value: unknown): number | null {
   const rawValue = getQueryString(value)
 
@@ -889,13 +1039,19 @@ function applyQueryPreset(): void {
 }
 
 function selectMode(mode: AppMode): void {
+  if (mode === 'timer-mix') {
+    clearPendingTimerMixState('new_mix')
+  }
+
   appMode.value = mode
   errorMessage.value = ''
   timerMixErrorMessage.value = ''
   quickStartMessage.value = ''
+  timerMixStatusMessage.value = ''
 }
 
 function applyTimerMixQuickStart(preset: TimerMixQuickStartPreset): void {
+  clearPendingTimerMixState('preset_change')
   selectedQuickStartId.value = preset.id
   appMode.value = 'timer-mix'
   sourceType.value = 'spotify-search'
@@ -910,6 +1066,7 @@ function applyTimerMixQuickStart(preset: TimerMixQuickStartPreset): void {
   timerMixErrorMessage.value = ''
   errorMessage.value = ''
   quickStartMessage.value = t('quickStarts.applied')
+  timerMixStatusMessage.value = ''
   trackEvent('quick_start_click', {
     preset_name: quickStartAnalyticsNames[preset.id],
   })
@@ -924,12 +1081,21 @@ function handleTimerMixQuickStartChange(event: Event): void {
   const preset = timerMixQuickStarts.find(item => item.id === target.value)
 
   if (!preset) {
+    clearPendingTimerMixState('preset_change')
     selectedQuickStartId.value = ''
     quickStartMessage.value = ''
+    timerMixStatusMessage.value = ''
+    timerMix.value = null
     return
   }
 
   applyTimerMixQuickStart(preset)
+}
+
+function getTimerMixQuickStartId(value: string): TimerMixQuickStartId | '' {
+  return timerMixQuickStarts.some(preset => preset.id === value)
+    ? value as TimerMixQuickStartId
+    : ''
 }
 
 function isIgnorableReadyPlayerError(message: string): boolean {
@@ -979,6 +1145,18 @@ async function handleSourceChange(): Promise<void> {
   if (sourceType.value === 'user-playlist' && hasRequiredSourceAuth.value) {
     await loadUserPlaylists()
   }
+}
+
+async function handleTimerMixSourceChange(): Promise<void> {
+  clearPendingTimerMixState('source_change')
+  timerMix.value = null
+  timerMixAccessToken.value = ''
+  timerMixErrorMessage.value = ''
+  timerMixStatusMessage.value = ''
+  selectedQuickStartId.value = ''
+  quickStartMessage.value = ''
+
+  await handleSourceChange()
 }
 
 const isPersonalSource = computed(() => sourceType.value !== 'spotify-search')
@@ -1392,7 +1570,7 @@ onBeforeUnmount(() => {
                     id="timer-mix-source"
                     v-model="sourceType"
                     name="timerMixSourceType"
-                    @change="handleSourceChange"
+                    @change="handleTimerMixSourceChange"
                   >
                     <option
                       v-for="option in sourceOptions"
@@ -1411,7 +1589,7 @@ onBeforeUnmount(() => {
               >
                 <button
                   type="button"
-                  @click="connectSpotifyForSource"
+                  @click="connectSpotifyForTimerMixSource"
                 >
                   {{ sourceConnectLabel }}
                 </button>
@@ -1548,6 +1726,10 @@ onBeforeUnmount(() => {
 
             <p v-if="timerMixErrorMessage" class="form-error" role="alert">
               {{ timerMixErrorMessage }}
+            </p>
+
+            <p v-if="timerMixStatusMessage" class="quick-start-feedback" aria-live="polite">
+              {{ timerMixStatusMessage }}
             </p>
 
             <p v-if="spotifyPlayerError" class="form-error" role="alert">

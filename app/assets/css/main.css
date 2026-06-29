@@ -80,6 +80,27 @@ select {
   color: #16833c;
 }
 
+.dev-cookie-button {
+  min-height: 32px;
+  margin-top: 0;
+  padding: 0 12px;
+  border: 1px solid #ddb56c;
+  border-radius: 8px;
+  color: #5a3907;
+  background: #fff5dc;
+  font-size: 0.78rem;
+  font-weight: 900;
+}
+
+.dev-cookie-button:hover {
+  background: #ffe7a8;
+}
+
+.dev-cookie-button:focus-visible {
+  outline: 3px solid rgb(221 181 108 / 32%);
+  outline-offset: 2px;
+}
+
 .site-footer {
   border-top: 1px solid #dfe8e1;
   color: #657169;
