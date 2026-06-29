@@ -1555,7 +1555,7 @@ onBeforeUnmount(() => {
               class="playlist-form timer-mix-form"
               @submit.prevent="handleMainSubmit"
             >
-              <div>
+              <div class="timer-mix-form-heading">
                 <h2 class="section-title">
                   {{ t('timerMix.title') }}
                 </h2>

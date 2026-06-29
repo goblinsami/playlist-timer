@@ -478,11 +478,23 @@ button:disabled {
 
 .timer-mix-form {
   order: 1;
+  gap: 0;
+}
+
+.timer-mix-form-heading {
+  display: grid;
+  padding: 16px 0 16px 8px  ;
+}
+
+.timer-mix-form .section-title {
+  margin: 0;
+  line-height: 1.2;
 }
 
 .timer-mix-action-panel {
   display: grid;
   gap: 12px;
+  margin-top: 16px;
 }
 
 .timer-mix-action-panel__buttons {
@@ -739,7 +751,6 @@ button:disabled {
 }
 
 .preview {
-  margin-top: 28px;
   padding: 22px;
   border: 1px dashed #bcc9bf;
   border-radius: 16px;
