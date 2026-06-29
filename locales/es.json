@@ -8,7 +8,9 @@
     "quickStarts": "Accesos rápidos",
     "privacy": "Privacidad",
     "terms": "Términos",
-    "contact": "Contacto"
+    "contact": "Contacto",
+    "openMenu": "Abrir menu",
+    "closeMenu": "Cerrar menu"
   },
   "footer": {
     "tagline": "Convierte Spotify en un temporizador musical."
@@ -85,7 +87,8 @@
     "connecting": "Conectando...",
     "oauthReady": "Spotify conectado. Tu mix esta listo.",
     "start": "Iniciar Timer Mix",
-    "stop": "Parar",
+    "stop": "Parar Timer Mix",
+    "nowPlaying": "Sonando ahora",
     "requiresPremium": "Timer Mix requiere Spotify Premium porque Spotify solo permite la reproducción en el navegador para cuentas Premium.",
     "limitation": "Timer Mix se reproduce en vivo en este navegador. No crea un archivo de audio exportable ni un mashup permanente.",
     "currentTrack": "Cancion actual",

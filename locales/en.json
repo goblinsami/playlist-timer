@@ -8,7 +8,9 @@
     "quickStarts": "Quick Starts",
     "privacy": "Privacy",
     "terms": "Terms",
-    "contact": "Contact"
+    "contact": "Contact",
+    "openMenu": "Open menu",
+    "closeMenu": "Close menu"
   },
   "footer": {
     "tagline": "Turn Spotify into a music timer."
@@ -85,7 +87,8 @@
     "connecting": "Connecting...",
     "oauthReady": "Spotify connected. Your mix is ready.",
     "start": "Start Timer Mix",
-    "stop": "Stop",
+    "stop": "Stop Timer Mix",
+    "nowPlaying": "Now playing",
     "requiresPremium": "Timer Mix requires Spotify Premium because Spotify only allows browser playback for Premium accounts.",
     "limitation": "Timer Mix plays live in this browser. It does not create an exportable audio file or permanent mashup.",
     "currentTrack": "Current track",

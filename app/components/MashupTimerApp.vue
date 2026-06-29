@@ -220,6 +220,7 @@ const timerMixPlaybackInput = computed(() => ({
 const timerMixPlayback = useTimerMix(timerMixPlaybackInput)
 const runtimeConfig = useRuntimeConfig()
 const appName = runtimeConfig.public.appName
+const isDedicatedTimerMixPage = computed(() => props.initialMode === 'timer-mix' && props.allowAds === false)
 const hasTrackedSpotifySdkReady = ref(false)
 const timerProgressFillElement = ref<HTMLElement | null>(null)
 const timerProgressTimeElement = ref<HTMLElement | null>(null)
@@ -574,7 +575,7 @@ function createPendingTimerMixOAuthState(): TimerMixOAuthState {
     songCount: songCount.value,
     fadeSeconds: fadeSeconds.value,
     selectionMode: selectionMode.value,
-    selectedQuickStartId: selectedQuickStartId.value,
+    selectedQuickStartId: selectedQuickStartId.value || getMatchingTimerMixQuickStartId(),
     preparedMix: timerMix.value,
   }
 }
@@ -602,6 +603,7 @@ function restorePendingTimerMixOAuthState(isSuccessReturn: boolean): void {
   songCount.value = pendingState.songCount
   fadeSeconds.value = pendingState.fadeSeconds
   selectedQuickStartId.value = getTimerMixQuickStartId(pendingState.selectedQuickStartId)
+    || getMatchingTimerMixQuickStartId()
   timerMix.value = getRestorablePreparedTimerMix(pendingState.preparedMix)
   timerMixAccessToken.value = ''
   timerMixErrorMessage.value = ''
@@ -1036,6 +1038,8 @@ function applyQueryPreset(): void {
   if (queryFadeSeconds !== null) {
     fadeSeconds.value = queryFadeSeconds
   }
+
+  selectedQuickStartId.value = getMatchingTimerMixQuickStartId()
 }
 
 function selectMode(mode: AppMode): void {
@@ -1098,6 +1102,25 @@ function getTimerMixQuickStartId(value: string): TimerMixQuickStartId | '' {
     : ''
 }
 
+function getMatchingTimerMixQuickStartId(): TimerMixQuickStartId | '' {
+  if (sourceType.value !== 'spotify-search') {
+    return ''
+  }
+
+  const matchingPreset = timerMixQuickStarts.find(preset =>
+    normalizeQuickStartArtist(preset.artist) === normalizeQuickStartArtist(artist.value)
+    && durationMinutes.value === preset.durationMinutes
+    && songCount.value === preset.songCount
+    && fadeSeconds.value === preset.fadeSeconds,
+  )
+
+  return matchingPreset?.id ?? ''
+}
+
+function normalizeQuickStartArtist(value: string): string {
+  return value.trim().toLocaleLowerCase()
+}
+
 function isIgnorableReadyPlayerError(message: string): boolean {
   return spotifyPlayer.isReady.value && message === 'Invalid token scopes.'
 }
@@ -1157,6 +1180,17 @@ async function handleTimerMixSourceChange(): Promise<void> {
   quickStartMessage.value = ''
 
   await handleSourceChange()
+}
+
+function clearPreparedTimerMixForFormChange(): void {
+  if (!timerMix.value || timerMixPlayback.isPlaying.value) {
+    return
+  }
+
+  timerMix.value = null
+  timerMixAccessToken.value = ''
+  timerMixErrorMessage.value = ''
+  timerMixStatusMessage.value = ''
 }
 
 const isPersonalSource = computed(() => sourceType.value !== 'spotify-search')
@@ -1285,7 +1319,13 @@ onBeforeUnmount(() => {
 </script>
 
 <template>
-  <main class="page-shell">
+  <main
+    class="page-shell"
+    :class="{
+      'page-shell--timer-mix': appMode === 'timer-mix',
+      'page-shell--timer-mix-playing': appMode === 'timer-mix' && timerMixPlayback.isPlaying.value,
+    }"
+  >
     <div class="page-content">
       <div class="page-layout">
         <div class="layout-spacer" aria-hidden="true" />
@@ -1305,7 +1345,7 @@ onBeforeUnmount(() => {
               </select>
             </label>
 
-            <header class="hero">
+            <header v-if="!isDedicatedTimerMixPage" class="hero">
               <p class="eyebrow">
                 <NuxtLink class="app-home-link" to="/" @click="resetRootForm">
                   {{ appName }}
@@ -1327,7 +1367,7 @@ onBeforeUnmount(() => {
               </div>
             </header>
 
-            <div class="field mode-switcher">
+            <div v-if="!isDedicatedTimerMixPage" class="field mode-switcher">
               <label for="app-mode">{{ t('mode.label') }}</label>
               <div class="select-wrapper">
                 <select
@@ -1498,7 +1538,7 @@ onBeforeUnmount(() => {
 
             <form
               v-else
-              class="playlist-form"
+              class="playlist-form timer-mix-form"
               @submit.prevent="handleMainSubmit"
             >
               <div>
@@ -1563,6 +1603,38 @@ onBeforeUnmount(() => {
                 </p>
               </section>
 
+              <div class="timer-mix-action-panel">
+                <button
+                  v-if="!timerMix"
+                  type="submit"
+                  :disabled="isTimerMixPrepareDisabled"
+                >
+                  {{ isPreparingMix ? t('preview.building') : t('timerMix.prepare') }}
+                </button>
+
+                <div
+                  v-else-if="!timerMixPlayback.isPlaying.value"
+                  class="button-row timer-mix-action-panel__buttons"
+                >
+                  <button
+                    v-if="!hasTimerMixPlaybackAuth || !spotifyPlayer.isReady.value"
+                    type="button"
+                    :disabled="spotifyPlayer.isConnecting.value"
+                    @click="connectSpotifyPlayer"
+                  >
+                    {{ spotifyPlayer.isConnecting.value ? t('timerMix.connecting') : t('timerMix.connectSpotify') }}
+                  </button>
+
+                  <button
+                    type="button"
+                    :disabled="isTimerMixStartDisabled"
+                    @click="startTimerMix"
+                  >
+                    {{ t('timerMix.start') }}
+                  </button>
+                </div>
+              </div>
+
               <div class="field">
                 <label for="timer-mix-source">{{ t('timerMix.source') }}</label>
                 <div class="select-wrapper">
@@ -1606,6 +1678,7 @@ onBeforeUnmount(() => {
                     v-model="selectedPlaylistId"
                     name="timerMixPlaylistId"
                     :disabled="isLoadingPlaylists || playlists.length === 0"
+                    @change="clearPreparedTimerMixForFormChange"
                   >
                     <option
                       v-for="playlist in playlists"
@@ -1631,6 +1704,7 @@ onBeforeUnmount(() => {
                     id="timer-mix-selection-mode"
                     v-model="selectionMode"
                     name="timerMixSelectionMode"
+                    @change="clearPreparedTimerMixForFormChange"
                   >
                     <option value="random">
                       {{ t('timerMix.random') }}
@@ -1654,6 +1728,7 @@ onBeforeUnmount(() => {
                   :placeholder="t('form.artist.placeholder')"
                   autocomplete="on"
                   :required="sourceType === 'spotify-search'"
+                  @input="clearPreparedTimerMixForFormChange"
                 >
               </div>
 
@@ -1671,6 +1746,7 @@ onBeforeUnmount(() => {
                   placeholder="7"
                   inputmode="numeric"
                   required
+                  @input="clearPreparedTimerMixForFormChange"
                 >
                 </div>
 
@@ -1687,6 +1763,7 @@ onBeforeUnmount(() => {
                   placeholder="3"
                   inputmode="numeric"
                   required
+                  @input="clearPreparedTimerMixForFormChange"
                 >
                 </div>
 
@@ -1703,21 +1780,20 @@ onBeforeUnmount(() => {
                   placeholder="5"
                   inputmode="numeric"
                   required
+                  @input="clearPreparedTimerMixForFormChange"
                 >
                 </div>
               </div>
 
-              <p class="timer-mix-note">
-                {{ t('timerMix.requiresPremium') }}
-              </p>
+              <div class="timer-mix-notes">
+                <p class="timer-mix-note">
+                  {{ t('timerMix.requiresPremium') }}
+                </p>
 
-              <p class="timer-mix-note">
-                {{ t('timerMix.limitation') }}
-              </p>
-
-              <button type="submit" :disabled="isTimerMixPrepareDisabled">
-                {{ isPreparingMix ? t('preview.building') : t('timerMix.prepare') }}
-              </button>
+                <p class="timer-mix-note">
+                  {{ t('timerMix.limitation') }}
+                </p>
+              </div>
             </form>
 
             <p v-if="errorMessage" class="form-error" role="alert">
@@ -1834,7 +1910,8 @@ onBeforeUnmount(() => {
 
             <section
               v-else
-              class="preview"
+              class="preview timer-mix-preview"
+              :class="{ 'timer-mix-preview--playing': timerMixPlayback.isPlaying.value }"
               aria-labelledby="timer-mix-preview-title"
               aria-live="polite"
               :aria-busy="isPreparingMix"
@@ -1868,7 +1945,7 @@ onBeforeUnmount(() => {
                   </span>
                 </div>
 
-                <dl class="preview-stats">
+                <dl class="preview-stats timer-mix-summary">
                   <div>
                     <dt>{{ t('preview.target') }}</dt>
                     <dd>{{ formatDuration(timerMix.totalDurationMs) }}</dd>
@@ -1887,42 +1964,61 @@ onBeforeUnmount(() => {
                   </div>
                 </dl>
 
-                <div class="timer-mix-now">
-                  <p>
-                    <strong>{{ t('timerMix.currentTrack') }}</strong>
-                    <span>{{ timerMixCurrentTrack?.name ?? '-' }}</span>
-                  </p>
-                  <p>
-                    <strong>{{ t('timerMix.nextTrack') }}</strong>
-                    <span>{{ timerMixNextTrack?.name ?? '-' }}</span>
-                  </p>
-                </div>
-
-                <div
-                  class="timer-progress"
-                  :class="{ 'timer-progress--playing': timerMixPlayback.isPlaying.value }"
-                >
-                  <div class="timer-progress__meta">
-                    <div>
-                      <strong>{{ t('timerMix.progress.currentBlock') }}</strong>
-                      <span>{{ timerMixCurrentTrack?.name ?? '-' }}</span>
-                    </div>
-                    <span
-                      ref="timerProgressTimeElement"
-                      class="timer-progress__time"
+                <div class="timer-mix-player-state">
+                  <div class="timer-mix-now">
+                    <p
+                      v-if="timerMixPlayback.isPlaying.value"
+                      class="timer-mix-now__current"
                     >
-                      {{ getTimerMixProgressLabel(timerMix.blockDurationMs) }}
+                      <span>{{ t('timerMix.nowPlaying') }}</span>
+                      <strong>{{ timerMixCurrentTrack?.name ?? '-' }}</strong>
+                      <span>{{ timerMixCurrentTrack?.artist ?? '-' }}</span>
+                    </p>
+                    <p v-else>
+                      <strong>{{ t('timerMix.currentTrack') }}</strong>
+                      <span>{{ timerMixCurrentTrack?.name ?? '-' }}</span>
+                    </p>
+                    <p>
+                      <strong>{{ t('timerMix.nextTrack') }}</strong>
+                      <span>{{ timerMixNextTrack?.name ?? '-' }}</span>
+                    </p>
+                  </div>
+
+                  <div
+                    class="timer-progress"
+                    :class="{ 'timer-progress--playing': timerMixPlayback.isPlaying.value }"
+                  >
+                    <div class="timer-progress__meta">
+                      <div>
+                        <strong>{{ t('timerMix.progress.currentBlock') }}</strong>
+                        <span>{{ timerMixCurrentTrack?.name ?? '-' }}</span>
+                      </div>
+                      <span
+                        ref="timerProgressTimeElement"
+                        class="timer-progress__time"
+                      >
+                        {{ getTimerMixProgressLabel(timerMix.blockDurationMs) }}
+                      </span>
+                    </div>
+                    <div class="timer-progress__bar" aria-hidden="true">
+                      <div
+                        ref="timerProgressFillElement"
+                        class="timer-progress__fill"
+                      />
+                    </div>
+                    <span class="timer-progress__track-count">
+                      {{ t('timerMix.progress.trackCount', { current: timerMixPlayback.currentTrackIndex.value + 1, total: timerMix.songCount }) }}
                     </span>
                   </div>
-                  <div class="timer-progress__bar" aria-hidden="true">
-                    <div
-                      ref="timerProgressFillElement"
-                      class="timer-progress__fill"
-                    />
+
+                  <div v-if="timerMixPlayback.isPlaying.value" class="button-row timer-mix-stop-row">
+                    <button
+                      type="button"
+                      @click="stopTimerMix"
+                    >
+                      {{ t('timerMix.stop') }}
+                    </button>
                   </div>
-                  <span class="timer-progress__track-count">
-                    {{ t('timerMix.progress.trackCount', { current: timerMixPlayback.currentTrackIndex.value + 1, total: timerMix.songCount }) }}
-                  </span>
                 </div>
 
                 <ol class="track-list" :aria-label="t('preview.tracks')">
@@ -1943,33 +2039,6 @@ onBeforeUnmount(() => {
                   </li>
                 </ul>
 
-                <div class="button-row">
-                  <button
-                    v-if="!hasTimerMixPlaybackAuth || !spotifyPlayer.isReady.value"
-                    type="button"
-                    :disabled="spotifyPlayer.isConnecting.value"
-                    @click="connectSpotifyPlayer"
-                  >
-                    {{ spotifyPlayer.isConnecting.value ? t('timerMix.connecting') : t('timerMix.connectSpotify') }}
-                  </button>
-
-                  <button
-                    v-if="!timerMixPlayback.isPlaying.value"
-                    type="button"
-                    :disabled="isTimerMixStartDisabled"
-                    @click="startTimerMix"
-                  >
-                    {{ t('timerMix.start') }}
-                  </button>
-
-                  <button
-                    v-else
-                    type="button"
-                    @click="stopTimerMix"
-                  >
-                    {{ t('timerMix.stop') }}
-                  </button>
-                </div>
               </template>
             </section>
 

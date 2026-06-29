@@ -8,7 +8,9 @@
     "quickStarts": "Accessos ràpids",
     "privacy": "Privacitat",
     "terms": "Termes",
-    "contact": "Contacte"
+    "contact": "Contacte",
+    "openMenu": "Obrir menu",
+    "closeMenu": "Tancar menu"
   },
   "footer": {
     "tagline": "Converteix Spotify en un temporitzador musical."
@@ -85,7 +87,8 @@
     "connecting": "Connectant...",
     "oauthReady": "Spotify connectat. El teu mix esta llest.",
     "start": "Inicia Timer Mix",
-    "stop": "Atura",
+    "stop": "Aturar Timer Mix",
+    "nowPlaying": "Sona ara",
     "requiresPremium": "Timer Mix requereix Spotify Premium perquè Spotify només permet la reproducció al navegador per a comptes Premium.",
     "limitation": "Timer Mix es reprodueix en directe en aquest navegador. No crea un fitxer d'àudio exportable ni un mashup permanent.",
     "currentTrack": "Canco actual",
